@@ -32,11 +32,16 @@ function derivedData(recent: DailyReading[], historical: DailyReading[]) {
   return { monthlyAvgs, chartYears }
 }
 
+function lakeFromURL(): Lake | null {
+  const id = new URLSearchParams(window.location.search).get('lake')
+  return LAKES.find(l => l.id === id) ?? null
+}
+
 export function useAppState() {
   const [isDark, setIsDark] = useState(true)
   const [selectedLake, setSelectedLakeRaw] = useState<Lake>(() => {
     const saved = localStorage.getItem('selectedLakeID')
-    return LAKES.find(l => l.id === saved) ?? DEFAULT_LAKE
+    return lakeFromURL() ?? LAKES.find(l => l.id === saved) ?? DEFAULT_LAKE
   })
 
   const [readings,              setReadings]              = useState<DailyReading[]>([])
@@ -74,15 +79,34 @@ export function useAppState() {
     }
   }, [])
 
-  const selectLake = useCallback((lake: Lake) => {
+  const selectLake = useCallback((lake: Lake, replace = false) => {
     setSelectedLakeRaw(lake)
     localStorage.setItem('selectedLakeID', lake.id)
+    const url = new URL(window.location.href)
+    url.searchParams.set('lake', lake.id)
+    window.history[replace ? 'replaceState' : 'pushState'](null, '', url)
     setReadings([])
     setHistoricalReadings([])
     setThirtyYearMonthlyAvgs([])
     setChartYearDailyReadings({})
     setLastUpdated(null)
   }, [])
+
+  // Sync selected lake to the URL on first load, and react to back/forward navigation
+  useEffect(() => {
+    const url = new URL(window.location.href)
+    if (url.searchParams.get('lake') !== selectedLake.id) {
+      url.searchParams.set('lake', selectedLake.id)
+      window.history.replaceState(null, '', url)
+    }
+    const onPopState = () => {
+      const lake = lakeFromURL()
+      if (lake && lake.id !== selectedLake.id) selectLake(lake, true)
+    }
+    window.addEventListener('popstate', onPopState)
+    return () => window.removeEventListener('popstate', onPopState)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedLake.id])
 
   // Fetch on lake change + hourly refresh
   useEffect(() => {

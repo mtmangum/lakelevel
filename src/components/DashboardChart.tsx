@@ -437,7 +437,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
           {gridlines.map(gl => {
             const y = toSY(gl.svgY)
             return (
-              <line key={gl.ft} x1={0} y1={y} x2={chartW} y2={y}
+              <line key={gl.ft} x1={showYAxis ? Y_AXIS_WIDTH : 0} y1={y} x2={chartW} y2={y}
                 stroke={gl.isAccent ? theme.accent : theme.divider}
                 strokeWidth={1} strokeDasharray={gl.isAccent ? undefined : '3,5'} />
             )

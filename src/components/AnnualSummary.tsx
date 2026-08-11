@@ -3,15 +3,18 @@ import type { Theme } from '../theme'
 import type { DailyReading } from '../types'
 import type { Lake } from '../data/lakes'
 import { COLORS } from '../theme'
+import type { Units } from '../units'
+import { toDisplayValue } from '../units'
 
 interface Props {
   theme: Theme
   lake: Lake
   historicalReadings: DailyReading[]
+  units: Units
   onClose: () => void
 }
 
-export function AnnualSummary({ theme, lake, historicalReadings, onClose }: Props) {
+export function AnnualSummary({ theme, lake, historicalReadings, units, onClose }: Props) {
   // Close on Escape
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -31,14 +34,15 @@ export function AnnualSummary({ theme, lake, historicalReadings, onClose }: Prop
       .sort((a, b) => b.date.localeCompare(a.date))[0]
     rows.push({
       year:  yr === currentYear ? `${yr} (YTD)` : `${yr}`,
-      min:   min.toFixed(1),
-      max:   max.toFixed(1),
-      avg:   avg.toFixed(1),
+      min:   toDisplayValue(min, units).toFixed(1),
+      max:   toDisplayValue(max, units).toFixed(1),
+      avg:   toDisplayValue(avg, units).toFixed(1),
       pct:   yearEnd ? `${Math.round(yearEnd.percentFull)}%` : '—',
     })
   }
 
-  const cols = ['YEAR', 'MIN (FT)', 'MAX (FT)', 'AVG (FT)', 'YEAR-END % FULL']
+  const unitLabel = units.toUpperCase()
+  const cols = ['YEAR', `MIN (${unitLabel})`, `MAX (${unitLabel})`, `AVG (${unitLabel})`, 'YEAR-END % FULL']
 
   return (
     <>

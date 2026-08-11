@@ -3,6 +3,8 @@ import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 import type { DailyReading } from '../types'
 import type { MonthlyAvg } from '../hooks/useAppState'
+import type { Units } from '../units'
+import { formatLevel, formatSignedLevel } from '../units'
 
 interface Props {
   theme: Theme
@@ -10,17 +12,15 @@ interface Props {
   dailyNetCfs: number | null
   thirtyYearAvgLevel: number | null
   thirtyYearMonthlyAvgs: MonthlyAvg[]
+  units: Units
 }
 
 const cfsFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
 
-export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel }: Props) {
+export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, units }: Props) {
   const latest = readings.at(-1) ?? null
 
-  const levelStr = !latest ? '—'
-    : latest.waterLevel >= 1000
-      ? `${Math.round(latest.waterLevel)} ft`
-      : `${latest.waterLevel.toFixed(1)} ft`
+  const levelStr = !latest ? '—' : formatLevel(latest.waterLevel, units)
 
   const netCfs = dailyNetCfs
   const inflowStr = netCfs === null ? '—'
@@ -33,7 +33,7 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel }: P
 
   const vsAvg = latest && thirtyYearAvgLevel !== null
     ? latest.waterLevel - thirtyYearAvgLevel : null
-  const vsAvgStr = vsAvg !== null ? `${vsAvg >= 0 ? '+' : ''}${vsAvg.toFixed(1)} ft` : '—'
+  const vsAvgStr = vsAvg !== null ? formatSignedLevel(vsAvg, units) : '—'
   const vsAvgColor = vsAvg !== null ? (vsAvg >= 0 ? COLORS.water : COLORS.accent) : theme.text
 
   // Trend direction
@@ -93,7 +93,7 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel }: P
           value: vsAvgStr,
           valueColor: vsAvgColor,
           detail: thirtyYearAvgLevel !== null
-            ? <span style={{ color: theme.textMuted(0.55) }}>Hist. avg: {thirtyYearAvgLevel.toFixed(1)} ft</span>
+            ? <span style={{ color: theme.textMuted(0.55) }}>Hist. avg: {formatLevel(thirtyYearAvgLevel, units)}</span>
             : null,
         },
       ].map((cell, i, arr) => (

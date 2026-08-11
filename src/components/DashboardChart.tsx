@@ -5,6 +5,8 @@ import { ftToSvgY, svgYToFt } from '../data/lakes'
 import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 import type { MonthlyAvg } from '../hooks/useAppState'
+import type { Units } from '../units'
+import { toDisplayValue, fromDisplayValue, formatLevel } from '../units'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -132,24 +134,29 @@ function computeYRange(series: YearSeries[], lake: Lake, xRange: [number, number
 
 // ─── Gridlines ────────────────────────────────────────────────────────────────
 
-function computeGridlines(lake: Lake, yRange: [number, number]) {
+function computeGridlines(lake: Lake, yRange: [number, number], units: Units) {
   const [yLo, yHi] = yRange
-  const top = svgYToFt(lake, yLo), bot = svgYToFt(lake, yHi), span = top - bot
+  const top = toDisplayValue(svgYToFt(lake, yLo), units)
+  const bot = toDisplayValue(svgYToFt(lake, yHi), units)
+  const span = top - bot
   const step = span < 3 ? 0.5 : span < 6 ? 1 : span < 12 ? 2 : span < 25 ? 5 : span < 150 ? 10 : 20
-  const ftSet = new Set<number>()
-  let f = Math.ceil(bot / step) * step
-  while (f <= top + step * 0.01) { ftSet.add(f); f += step }
-  for (const anchor of [lake.fullPool, lake.lowThreshold]) {
+  const dispSet = new Set<number>()
+  let v = Math.ceil(bot / step) * step
+  while (v <= top + step * 0.01) { dispSet.add(v); v += step }
+  const fullPoolDisp = toDisplayValue(lake.fullPool, units)
+  const lowThresholdDisp = toDisplayValue(lake.lowThreshold, units)
+  for (const anchor of [fullPoolDisp, lowThresholdDisp]) {
     if (anchor >= bot - 0.5 && anchor <= top + 0.5) {
-      ftSet.forEach(v => { if (Math.abs(v - anchor) < 3) ftSet.delete(v) })
-      ftSet.add(anchor)
+      dispSet.forEach(v => { if (Math.abs(v - anchor) < 3) dispSet.delete(v) })
+      dispSet.add(anchor)
     }
   }
-  return [...ftSet].sort((a, b) => b - a).flatMap(ft => {
+  return [...dispSet].sort((a, b) => b - a).flatMap(disp => {
+    const ft = fromDisplayValue(disp, units)
     const svgY = ftToSvgY(lake, ft)
     if (svgY < yLo - 1 || svgY > yHi + 1) return []
     const isAccent = Math.abs(ft - lake.fullPool) < 0.01 || Math.abs(ft - lake.lowThreshold) < 0.01
-    const label = ft >= 1000 ? Math.round(ft).toString() : ft === Math.floor(ft) ? `${ft}` : ft.toFixed(1)
+    const label = units === 'ft' && disp >= 1000 ? Math.round(disp).toString() : disp === Math.floor(disp) ? `${disp}` : disp.toFixed(1)
     return [{ ft, svgY, isAccent, label }]
   })
 }
@@ -213,9 +220,10 @@ interface Props {
   readings: DailyReading[]
   chartYearDailyReadings: Record<number, DailyReading[]>
   thirtyYearMonthlyAvgs: MonthlyAvg[]
+  units: Units
 }
 
-export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs }: Props) {
+export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs, units }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 800, h: 320 })
   const [xRange, setXRange] = useState<[number, number]>([0, 1000])
@@ -273,7 +281,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   const toSY = (sy: number) => (sy - yRange[0]) / (yRange[1] - yRange[0]) * chartH
 
   // Memoized gridlines & ticks
-  const gridlines = useMemo(() => computeGridlines(lake, yRange), [lake, yRange])
+  const gridlines = useMemo(() => computeGridlines(lake, yRange, units), [lake, yRange, units])
   const dateTicks = useMemo(() => computeDateTicks(xRange), [xRange])
 
   // Path strings — expensive, memoized
@@ -294,14 +302,14 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
     for (const s of allSeries) {
       if (hidden.has(s.id)) continue
       const y = levelYAtX(s, svgX)
-      if (y !== null) rows.push({ id: s.id, color: s.color, label: s.year, dashed: false, ft: `${svgYToFt(lake, y).toFixed(1)} ft` })
+      if (y !== null) rows.push({ id: s.id, color: s.color, label: s.year, dashed: false, ft: formatLevel(svgYToFt(lake, y), units) })
     }
     if (!hidden.has(K_AVG) && avgSeries) {
       const y = levelYAtX(avgSeries, svgX)
-      if (y !== null) rows.push({ id: K_AVG, color: theme.chartAvgLine, label: K_AVG, dashed: true, ft: `${svgYToFt(lake, y).toFixed(1)} ft` })
+      if (y !== null) rows.push({ id: K_AVG, color: theme.chartAvgLine, label: K_AVG, dashed: true, ft: formatLevel(svgYToFt(lake, y), units) })
     }
     return rows
-  }, [svgX, dragStart, allSeries, avgSeries, hidden, lake, theme.chartAvgLine])
+  }, [svgX, dragStart, allSeries, avgSeries, hidden, lake, theme.chartAvgLine, units])
 
   const isZoomed = xRange[0] > 1 || xRange[1] < 999
   const showTooltip = tooltipRows.length > 0 && hoverX !== null

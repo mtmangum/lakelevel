@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import type { DailyReading } from '../types'
 import { LAKES, DEFAULT_LAKE, type Lake } from '../data/lakes'
 import { fetchRecentReadings, fetchAllReadings } from '../data/lakeDataService'
+import type { Units } from '../units'
 
 export interface MonthlyAvg { month: number; level: number }
 
@@ -39,6 +40,7 @@ function lakeFromURL(): Lake | null {
 
 export function useAppState() {
   const [isDark, setIsDark] = useState(true)
+  const [units,  setUnits]  = useState<Units>('ft')
   const [selectedLake, setSelectedLakeRaw] = useState<Lake>(() => {
     const saved = localStorage.getItem('selectedLakeID')
     return lakeFromURL() ?? LAKES.find(l => l.id === saved) ?? DEFAULT_LAKE
@@ -144,6 +146,7 @@ export function useAppState() {
 
   return {
     isDark, setIsDark,
+    units, setUnits,
     selectedLake, selectLake,
     readings, historicalReadings,
     thirtyYearMonthlyAvgs, chartYearDailyReadings,

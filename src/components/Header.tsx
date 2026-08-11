@@ -3,6 +3,7 @@ import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 import type { Lake } from '../data/lakes'
 import { LAKES } from '../data/lakes'
+import type { Units } from '../units'
 
 interface Props {
   theme: Theme
@@ -10,12 +11,14 @@ interface Props {
   onSelectLake: (lake: Lake) => void
   isDark: boolean
   onToggleDark: () => void
+  units: Units
+  onSetUnits: (units: Units) => void
   isLoading: boolean
   syncLabel: string
   onAnnualSummary: () => void
 }
 
-export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark, isLoading, syncLabel, onAnnualSummary }: Props) {
+export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark, units, onSetUnits, isLoading, syncLabel, onAnnualSummary }: Props) {
   const [showPicker, setShowPicker] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
@@ -133,7 +136,17 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
         <SegmentedControl
           options={[{ label: 'DARK', value: true }, { label: 'LIGHT', value: false }]}
           value={isDark}
-          onChange={onToggleDark}
+          onChange={() => onToggleDark()}
+          theme={theme}
+        />
+
+        <div style={{ width: 8 }} />
+
+        {/* Units toggle */}
+        <SegmentedControl
+          options={[{ label: 'FT', value: 'ft' as const }, { label: 'M', value: 'm' as const }]}
+          value={units}
+          onChange={onSetUnits}
           theme={theme}
         />
       </div>
@@ -173,10 +186,10 @@ function ShimmerBar({ color }: { color: string }) {
   )
 }
 
-function SegmentedControl({ options, value, onChange, theme }: {
-  options: Array<{ label: string; value: boolean }>
-  value: boolean
-  onChange: () => void
+function SegmentedControl<T>({ options, value, onChange, theme }: {
+  options: Array<{ label: string; value: T }>
+  value: T
+  onChange: (value: T) => void
   theme: Theme
 }) {
   return (
@@ -184,7 +197,7 @@ function SegmentedControl({ options, value, onChange, theme }: {
       {options.map(opt => (
         <button
           key={opt.label}
-          onClick={onChange}
+          onClick={() => onChange(opt.value)}
           style={{
             background: opt.value === value ? theme.surface : 'none',
             border: 'none',

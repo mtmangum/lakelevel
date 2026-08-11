@@ -22,6 +22,8 @@ export function App() {
         onSelectLake={state.selectLake}
         isDark={state.isDark}
         onToggleDark={() => state.setIsDark(d => !d)}
+        units={state.units}
+        onSetUnits={state.setUnits}
         isLoading={state.isLoadingData}
         syncLabel={state.syncLabel}
         onAnnualSummary={() => setShowSummary(s => !s)}
@@ -37,6 +39,7 @@ export function App() {
           dailyNetCfs={state.dailyNetCfs}
           thirtyYearAvgLevel={state.thirtyYearAvgLevel}
           thirtyYearMonthlyAvgs={state.thirtyYearMonthlyAvgs}
+          units={state.units}
         />
 
         <div style={{ flex: 1, minHeight: 0 }}>
@@ -46,6 +49,7 @@ export function App() {
             readings={state.readings}
             chartYearDailyReadings={state.chartYearDailyReadings}
             thirtyYearMonthlyAvgs={state.thirtyYearMonthlyAvgs}
+            units={state.units}
           />
         </div>
       </div>
@@ -55,6 +59,7 @@ export function App() {
           theme={theme}
           lake={state.selectedLake}
           historicalReadings={state.historicalReadings}
+          units={state.units}
           onClose={() => setShowSummary(false)}
         />
       )}

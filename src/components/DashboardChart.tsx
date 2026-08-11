@@ -433,11 +433,12 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
           onTouchMove={onTouchMove}
           onTouchEnd={onTouchEnd}
         >
-          {/* Gridlines */}
+          {/* Gridlines — start where the data lines begin (Jan 1), but never under the y-axis labels */}
           {gridlines.map(gl => {
             const y = toSY(gl.svgY)
+            const x1 = Math.max(showYAxis ? Y_AXIS_WIDTH : 0, toSX(40))
             return (
-              <line key={gl.ft} x1={showYAxis ? Y_AXIS_WIDTH : 0} y1={y} x2={chartW} y2={y}
+              <line key={gl.ft} x1={x1} y1={y} x2={chartW} y2={y}
                 stroke={gl.isAccent ? theme.accent : theme.divider}
                 strokeWidth={1} strokeDasharray={gl.isAccent ? undefined : '3,5'} />
             )

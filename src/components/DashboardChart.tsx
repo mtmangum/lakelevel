@@ -20,7 +20,8 @@ const YEAR_COLORS: Record<string, string> = {
   '2022': COLORS.neutral800,
 }
 
-const PAD_LEFT   = 44   // y-axis label column width
+const PAD_LEFT_DESKTOP = 44   // y-axis label column width
+const PAD_LEFT_MOBILE  = 30   // narrower gutter on phone-width screens
 const PAD_BOTTOM = 30   // x-axis label row height
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -265,6 +266,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
   const yRange = useMemo(() => computeYRange(visibleForRange, lake, xRange), [visibleForRange, lake, xRange])
 
+  const PAD_LEFT = size.w < 480 ? PAD_LEFT_MOBILE : PAD_LEFT_DESKTOP
   const chartW = size.w - PAD_LEFT
   const chartH = size.h - PAD_BOTTOM
 

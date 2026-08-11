@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="water" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#3E9CE0" />
+      <stop offset="100%" stop-color="#0E3F66" />
+    </linearGradient>
+  </defs>
+
+  <rect width="1024" height="1024" rx="200" fill="#2D2B2B" />
+
+  <path
+    d="M96,540
+       C240,470 360,470 440,520
+       C520,570 560,660 660,660
+       C760,660 800,590 900,540
+       L924,820 L96,820 Z"
+    fill="url(#water)" />
+
+  <path
+    d="M96,540
+       C240,470 360,470 440,520
+       C520,570 560,660 660,660
+       C760,660 800,590 900,540"
+    fill="none" stroke="#F8F4F4" stroke-width="46" stroke-linecap="round" stroke-linejoin="round" />
+
+  <circle cx="900" cy="540" r="76" fill="#EC3013" stroke="#F8F4F4" stroke-width="24" />
+</svg>

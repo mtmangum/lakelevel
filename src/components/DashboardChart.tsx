@@ -20,8 +20,7 @@ const YEAR_COLORS: Record<string, string> = {
   '2022': COLORS.neutral800,
 }
 
-const PAD_LEFT_DESKTOP = 36   // y-axis label column width
-const PAD_LEFT_MOBILE  = 30   // narrower gutter on phone-width screens
+const Y_AXIS_WIDTH = 34   // y-axis label overlay width (desktop only)
 const PAD_BOTTOM = 30   // x-axis label row height
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -266,9 +265,9 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
   const yRange = useMemo(() => computeYRange(visibleForRange, lake, xRange), [visibleForRange, lake, xRange])
 
-  const PAD_LEFT = size.w < 480 ? PAD_LEFT_MOBILE : PAD_LEFT_DESKTOP
-  const chartW = size.w - PAD_LEFT
+  const chartW = size.w
   const chartH = size.h - PAD_BOTTOM
+  const showYAxis = size.w >= 480
 
   const toSX = (sx: number) => (sx - xRange[0]) / (xRange[1] - xRange[0]) * chartW
   const toSY = (sy: number) => (sy - yRange[0]) / (yRange[1] - yRange[0]) * chartH
@@ -307,7 +306,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   const isZoomed = xRange[0] > 1 || xRange[1] < 999
   const showTooltip = tooltipRows.length > 0 && hoverX !== null
   const flipLeft    = (hoverX ?? 0) > chartW * 0.62
-  const tooltipX    = PAD_LEFT + (hoverX ?? 0) + (flipLeft ? -90 : 90)
+  const tooltipX    = (hoverX ?? 0) + (flipLeft ? -90 : 90)
   const tooltipY    = Math.max(90, Math.min(hoverY ?? 0, chartH - 120))
 
   // Interaction
@@ -407,13 +406,14 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
       {/* Chart */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        {/* Y-axis labels */}
-        {gridlines.map(gl => (
+        {/* Y-axis labels — overlaid on left edge, desktop only */}
+        {showYAxis && gridlines.map(gl => (
           <span key={gl.ft} style={{
             position: 'absolute', left: 0, top: toSY(gl.svgY) - 4,
-            width: PAD_LEFT - 4, textAlign: 'right',
+            width: Y_AXIS_WIDTH - 4, textAlign: 'right',
             fontSize: 10.5, fontWeight: gl.isAccent ? 700 : 400, lineHeight: 1,
             color: gl.isAccent ? theme.accent : theme.textMuted(0.35), userSelect: 'none',
+            zIndex: 2,
           }}>
             {gl.label}
           </span>
@@ -422,7 +422,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
         {/* SVG chart area */}
         <svg
           style={{
-            position: 'absolute', left: PAD_LEFT, top: 0, width: chartW, height: chartH,
+            position: 'absolute', left: 0, top: 0, width: chartW, height: chartH,
             cursor: 'crosshair', touchAction: 'none',
           }}
           onMouseMove={onMouseMove}
@@ -503,7 +503,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
         {dateTicks.map(tick => (
           <span key={`${tick.x}-${tick.label}`} style={{
             position: 'absolute', bottom: 14,
-            left: PAD_LEFT + toSX(tick.x), transform: 'translateX(-50%)',
+            left: toSX(tick.x), transform: 'translateX(-50%)',
             fontSize: tick.label.length > 3 ? 9.5 : 11,
             color: theme.textMuted(0.55), whiteSpace: 'nowrap', userSelect: 'none',
           }}>

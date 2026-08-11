@@ -1,6 +1,6 @@
 // CORS proxy: forwards /api/lake-csv?lake=travis&suffix=-1year
 // to https://waterdatafortexas.org/reservoirs/individual/travis-1year.csv
-exports.handler = async function (event) {
+export async function handler(event) {
   const { lake, suffix = '' } = event.queryStringParameters || {}
   if (!lake) return { statusCode: 400, body: 'Missing lake parameter' }
 

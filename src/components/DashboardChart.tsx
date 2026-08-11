@@ -381,7 +381,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 14 }}>
       {/* Title + reset + legend */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, paddingLeft: PAD_LEFT }}>
+      <div className="chart-title-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, paddingLeft: PAD_LEFT }}>
         <span style={{ fontSize: 14.5, fontWeight: 900, letterSpacing: '0.2px', color: theme.text }}>WATER LEVEL</span>
         {isZoomed && (
           <button onClick={() => setXRange([0, 1000])} style={{
@@ -392,8 +392,8 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
             RESET
           </button>
         )}
-        <div style={{ flex: 1 }} />
-        <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <div className="chart-legend-spacer" style={{ flex: 1 }} />
+        <div className="chart-legend" style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
           {allSeries.map(s => (
             <LegendItem key={s.id} id={s.id} label={s.year} color={s.color} dashed={false}
               hidden={hidden.has(s.id)} onToggle={toggle} onIsolate={isolate} theme={theme} />

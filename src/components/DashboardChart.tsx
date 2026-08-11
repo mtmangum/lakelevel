@@ -20,7 +20,7 @@ const YEAR_COLORS: Record<string, string> = {
   '2022': COLORS.neutral800,
 }
 
-const PAD_LEFT_DESKTOP = 44   // y-axis label column width
+const PAD_LEFT_DESKTOP = 36   // y-axis label column width
 const PAD_LEFT_MOBILE  = 30   // narrower gutter on phone-width screens
 const PAD_BOTTOM = 30   // x-axis label row height
 
@@ -383,7 +383,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', height: '100%', paddingTop: 14 }}>
       {/* Title + reset + legend */}
-      <div className="chart-title-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, paddingLeft: PAD_LEFT }}>
+      <div className="chart-title-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
         <span style={{ fontSize: 14.5, fontWeight: 900, letterSpacing: '0.2px', color: theme.text }}>WATER LEVEL</span>
         {isZoomed && (
           <button onClick={() => setXRange([0, 1000])} style={{

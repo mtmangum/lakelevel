@@ -4,7 +4,7 @@ import { COLORS } from '../theme'
 import type { DailyReading } from '../types'
 import type { MonthlyAvg } from '../hooks/useAppState'
 import type { Units } from '../units'
-import { formatLevel, formatSignedLevel } from '../units'
+import { formatLevel, formatSignedLevel, formatFlow } from '../units'
 
 interface Props {
   theme: Theme
@@ -15,8 +15,6 @@ interface Props {
   units: Units
 }
 
-const cfsFormat = new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 })
-
 export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, units }: Props) {
   const latest = readings.at(-1) ?? null
 
@@ -24,11 +22,11 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, uni
 
   const netCfs = dailyNetCfs
   const inflowStr = netCfs === null ? '—'
-    : netCfs > 10 ? `${cfsFormat.format(netCfs)} cfs`
+    : netCfs > 10 ? formatFlow(netCfs, units)
     : 'Steady'
 
   const outflowStr = netCfs === null ? '—'
-    : netCfs < -10 ? `${cfsFormat.format(Math.abs(netCfs))} cfs`
+    : netCfs < -10 ? formatFlow(Math.abs(netCfs), units)
     : 'Steady'
 
   const vsAvg = latest && thirtyYearAvgLevel !== null
@@ -79,7 +77,7 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, uni
           detail: inflowPct !== null
             ? <span style={{ color: inflowPct >= 0 ? COLORS.water : COLORS.accent }}>{inflowPct >= 0 ? '+' : ''}{inflowPct.toFixed(0)}% vs yesterday</span>
             : netCfs !== null && netCfs < -10
-              ? <span style={{ color: COLORS.accent }}>↓ {cfsFormat.format(Math.abs(netCfs))} cfs outbound</span>
+              ? <span style={{ color: COLORS.accent }}>↓ {formatFlow(Math.abs(netCfs), units)} outbound</span>
               : null,
         },
         {

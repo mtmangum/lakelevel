@@ -14,7 +14,7 @@ export function App() {
   return (
     <div style={{
       display: 'flex', flexDirection: 'column', height: '100%',
-      background: theme.background, color: theme.text, minWidth: 860,
+      background: theme.background, color: theme.text,
     }}>
       <Header
         theme={theme}
@@ -27,9 +27,9 @@ export function App() {
         onAnnualSummary={() => setShowSummary(s => !s)}
       />
 
-      <div style={{
+      <div className="app-content" style={{
         flex: 1, display: 'flex', flexDirection: 'column',
-        padding: '0 36px 20px', minHeight: 0,
+        minHeight: 0,
       }}>
         <StatGrid
           theme={theme}

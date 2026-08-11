@@ -51,7 +51,10 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel }: P
     : null
 
   return (
-    <div style={{ display: 'flex', borderBottom: `1px solid ${theme.divider}` }}>
+    <div className="stat-grid" style={{
+      display: 'flex', borderBottom: `1px solid ${theme.divider}`,
+      ...({ '--stat-divider': theme.divider } as React.CSSProperties),
+    }}>
       {[
         {
           label: 'CURRENT LEVEL',
@@ -95,7 +98,6 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel }: P
         },
       ].map((cell, i, arr) => (
         <div key={cell.label} style={{
-          flex: 1, padding: '12px 16px',
           borderRight: i < arr.length - 1 ? `1px solid ${theme.divider}` : 'none',
         }}>
           <div style={{ fontSize: 10.5, fontWeight: 700, letterSpacing: '0.5px', color: theme.textMuted(0.45), marginBottom: 4 }}>

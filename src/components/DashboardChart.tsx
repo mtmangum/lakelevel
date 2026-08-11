@@ -335,6 +335,38 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
     setDragStart(null); setDragEnd(null)
   }, [dragStart, xRange, chartW])
 
+  const touchPoint = (e: React.TouchEvent<SVGSVGElement>) => {
+    const t = e.touches[0] ?? e.changedTouches[0]
+    const r = e.currentTarget.getBoundingClientRect()
+    return { x: t.clientX - r.left, y: t.clientY - r.top }
+  }
+
+  const onTouchStart = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
+    const { x, y } = touchPoint(e)
+    setHoverX(x); setHoverY(y)
+    setDragStart(x); setDragEnd(null)
+  }, [])
+
+  const onTouchMove = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
+    const { x, y } = touchPoint(e)
+    setHoverX(x); setHoverY(y)
+    if (dragStart !== null) setDragEnd(x)
+  }, [dragStart])
+
+  const onTouchEnd = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
+    if (dragStart === null) return
+    const { x } = touchPoint(e)
+    const lo = Math.min(dragStart, x), hi = Math.max(dragStart, x)
+    if (hi - lo > 15) {
+      const span = xRange[1] - xRange[0]
+      setXRange([
+        Math.max(0, xRange[0] + (lo / chartW) * span),
+        Math.min(1000, xRange[0] + (hi / chartW) * span),
+      ])
+    }
+    setDragStart(null); setDragEnd(null)
+  }, [dragStart, xRange, chartW])
+
   const toggle = useCallback((id: string) => {
     setHidden(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
   }, [])
@@ -387,11 +419,17 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
         {/* SVG chart area */}
         <svg
-          style={{ position: 'absolute', left: PAD_LEFT, top: 0, width: chartW, height: chartH, cursor: 'crosshair' }}
+          style={{
+            position: 'absolute', left: PAD_LEFT, top: 0, width: chartW, height: chartH,
+            cursor: 'crosshair', touchAction: 'none',
+          }}
           onMouseMove={onMouseMove}
           onMouseLeave={() => { setHoverX(null); setHoverY(null) }}
           onMouseDown={onMouseDown}
           onMouseUp={onMouseUp}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
         >
           {/* Gridlines */}
           {gridlines.map(gl => {

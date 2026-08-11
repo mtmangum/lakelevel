@@ -32,11 +32,9 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
   }, [showPicker])
 
   return (
-    <header style={{
+    <header className="app-header" style={{
       display: 'flex', alignItems: 'center',
-      padding: '28px 36px 0',
       borderBottom: `1px solid ${theme.divider}`,
-      paddingBottom: 16,
       position: 'relative',
     }}>
       {/* Left: lake picker + title */}
@@ -115,28 +113,30 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
         </div>
       </div>
 
-      <div style={{ flex: 1 }} />
+      <div className="header-spacer" style={{ flex: 1 }} />
 
-      {/* Annual summary button */}
-      <button
-        onClick={onAnnualSummary}
-        style={{
-          background: 'none', border: `1.5px solid ${theme.divider}`,
-          cursor: 'pointer', fontFamily: 'inherit',
-          fontSize: 11, fontWeight: 600, letterSpacing: '0.3px',
-          color: theme.textMuted(0.5), padding: '6px 12px', marginRight: 16,
-        }}
-      >
-        ANNUAL SUMMARY
-      </button>
+      <div className="header-actions" style={{ display: 'flex', alignItems: 'center' }}>
+        {/* Annual summary button */}
+        <button
+          onClick={onAnnualSummary}
+          style={{
+            background: 'none', border: `1.5px solid ${theme.divider}`,
+            cursor: 'pointer', fontFamily: 'inherit',
+            fontSize: 11, fontWeight: 600, letterSpacing: '0.3px',
+            color: theme.textMuted(0.5), padding: '8px 12px', marginRight: 16,
+          }}
+        >
+          ANNUAL SUMMARY
+        </button>
 
-      {/* Dark / Light toggle */}
-      <SegmentedControl
-        options={[{ label: 'DARK', value: true }, { label: 'LIGHT', value: false }]}
-        value={isDark}
-        onChange={onToggleDark}
-        theme={theme}
-      />
+        {/* Dark / Light toggle */}
+        <SegmentedControl
+          options={[{ label: 'DARK', value: true }, { label: 'LIGHT', value: false }]}
+          value={isDark}
+          onChange={onToggleDark}
+          theme={theme}
+        />
+      </div>
 
       {/* Loading shimmer under header */}
       {isLoading && (

@@ -40,9 +40,14 @@ export default async req => {
   const text = await res.text()
 
   const fetchedAt = new Date().toISOString()
-  store?.set(key, text, { metadata: { fetchedAt } }).catch(err => {
+  // Must be awaited: an un-awaited write can get cut off when the function
+  // returns, since the runtime may freeze/terminate execution right after —
+  // leaving the cache permanently cold on this key.
+  try {
+    await store?.set(key, text, { metadata: { fetchedAt } })
+  } catch (err) {
     console.error(`lake-data blob write failed for ${key}`, err)
-  })
+  }
 
   return new Response(text, {
     status: 200,

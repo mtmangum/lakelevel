@@ -1,6 +1,6 @@
 // Scheduled function: pre-fetches every lake's CSV data from waterdatafortexas.org
 // and warms the shared Blobs cache that lake-csv.js reads from.
-import { getStore } from '@netlify/blobs'
+import { getLakeStore } from '../lib/lakeStore.js'
 
 const LAKE_IDS = ['buchanan', 'inks', 'lyndon-b-johnson', 'marble-falls', 'travis', 'austin']
 const SUFFIXES = ['', '-1year']
@@ -8,7 +8,7 @@ const SUFFIXES = ['', '-1year']
 export default async () => {
   let store
   try {
-    store = getStore('lake-data')
+    store = getLakeStore()
   } catch (err) {
     console.error('lake-data blob store unavailable, skipping sync', err)
     return

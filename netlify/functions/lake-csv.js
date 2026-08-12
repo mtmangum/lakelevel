@@ -1,7 +1,7 @@
 // CORS proxy + cache: serves /api/lake-csv?lake=travis&suffix=-1year
 // from the shared Blobs cache (warmed by sync-lake-data.js) when available,
 // falling back to a live fetch from waterdatafortexas.org on a cold miss.
-import { getStore } from '@netlify/blobs'
+import { getLakeStore } from '../lib/lakeStore.js'
 
 export async function handler(event) {
   const { lake, suffix = '' } = event.queryStringParameters || {}
@@ -11,7 +11,7 @@ export async function handler(event) {
   let store = null
 
   try {
-    store = getStore('lake-data')
+    store = getLakeStore()
     const cached = await store.getWithMetadata(key, { type: 'text' })
     if (cached) {
       return {

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react'
+import React, { useRef, useState, useMemo, useCallback, useEffect, useId } from 'react'
 import type { DailyReading, Point, CubicSegment } from '../types'
 import type { Lake } from '../data/lakes'
 import { ftToSvgY, svgYToFt } from '../data/lakes'
@@ -235,6 +235,7 @@ interface Props {
 }
 
 export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs, units }: Props) {
+  const clipId = useId()
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 800, h: 320 })
   const [xRange, setXRange] = useState<[number, number]>([0, 1000])
@@ -463,27 +464,37 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
             )
           })}
 
-          {/* 30-yr avg */}
-          {!hidden.has(K_AVG) && avgSeries && pathMap.has(K_AVG) && (
-            <path d={pathMap.get(K_AVG)!} fill="none"
-              stroke={theme.chartAvgLine} strokeWidth={1.5} strokeDasharray="5,5" />
-          )}
+          {/* Clip series lines to the plot area — an outlier point outside
+              the fenced yRange (see computeYRange) should cut off cleanly
+              at the frame edge rather than render past it uncontained. */}
+          <defs>
+            <clipPath id={clipId}>
+              <rect x={0} y={0} width={chartW} height={chartH} />
+            </clipPath>
+          </defs>
+          <g clipPath={`url(#${clipId})`}>
+            {/* 30-yr avg */}
+            {!hidden.has(K_AVG) && avgSeries && pathMap.has(K_AVG) && (
+              <path d={pathMap.get(K_AVG)!} fill="none"
+                stroke={theme.chartAvgLine} strokeWidth={1.5} strokeDasharray="5,5" />
+            )}
 
-          {/* Year lines (reversed → 2026 on top) */}
-          {[...allSeries].reverse().map(s => {
-            if (hidden.has(s.id)) return null
-            const d = pathMap.get(s.id); if (!d) return null
-            const dot = s.dotPosition ? { sx: toSX(s.dotPosition.x), sy: toSY(s.dotPosition.y) } : null
-            return (
-              <g key={s.id}>
-                <path d={d} fill="none" stroke={s.color}
-                  strokeWidth={s.year === '2026' ? 2.5 : 1.5} strokeLinecap="round" />
-                {dot && dot.sx >= 0 && dot.sx <= chartW && (
-                  <circle cx={dot.sx} cy={dot.sy} r={4.5} fill={s.color} />
-                )}
-              </g>
-            )
-          })}
+            {/* Year lines (reversed → 2026 on top) */}
+            {[...allSeries].reverse().map(s => {
+              if (hidden.has(s.id)) return null
+              const d = pathMap.get(s.id); if (!d) return null
+              const dot = s.dotPosition ? { sx: toSX(s.dotPosition.x), sy: toSY(s.dotPosition.y) } : null
+              return (
+                <g key={s.id}>
+                  <path d={d} fill="none" stroke={s.color}
+                    strokeWidth={s.year === '2026' ? 2.5 : 1.5} strokeLinecap="round" />
+                  {dot && dot.sx >= 0 && dot.sx <= chartW && (
+                    <circle cx={dot.sx} cy={dot.sy} r={4.5} fill={s.color} />
+                  )}
+                </g>
+              )
+            })}
+          </g>
 
           {/* Crosshair vertical line */}
           {hoverX !== null && dragStart === null && (

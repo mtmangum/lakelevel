@@ -56,6 +56,14 @@ export function useAppState() {
 
   const genRef = useRef(0)
 
+  // Re-render periodically so the "SYNCED Xm/h AGO" label keeps counting up
+  // instead of freezing at whatever it read on the last data fetch.
+  const [, retick] = useState(0)
+  useEffect(() => {
+    const timer = setInterval(() => retick(t => t + 1), 30_000)
+    return () => clearInterval(timer)
+  }, [])
+
   const fetchData = useCallback(async (lake: Lake) => {
     genRef.current += 1
     const gen = genRef.current
@@ -67,12 +75,12 @@ export function useAppState() {
         fetchAllReadings(lake),
       ])
       if (gen !== genRef.current) return
-      const { monthlyAvgs, chartYears } = derivedData(recent, historical)
-      setReadings(recent)
-      setHistoricalReadings(historical)
+      const { monthlyAvgs, chartYears } = derivedData(recent.rows, historical.rows)
+      setReadings(recent.rows)
+      setHistoricalReadings(historical.rows)
       setThirtyYearMonthlyAvgs(monthlyAvgs)
       setChartYearDailyReadings(chartYears)
-      setLastUpdated(new Date())
+      setLastUpdated(recent.fetchedAt ?? new Date())
     } catch (err) {
       if (gen !== genRef.current) return
       setDataError(err instanceof Error ? err.message : 'Fetch failed')
@@ -139,9 +147,10 @@ export function useAppState() {
   const syncLabel = (() => {
     if (!lastUpdated) return 'LIVE'
     const secs = Math.floor((Date.now() - lastUpdated.getTime()) / 1000)
-    if (secs < 60)   return 'LIVE · SYNCED JUST NOW'
-    if (secs < 3600) return `LIVE · SYNCED ${Math.floor(secs / 60)}M AGO`
-    return `LIVE · SYNCED ${Math.floor(secs / 3600)}H AGO`
+    if (secs < 60)    return 'LIVE · SYNCED JUST NOW'
+    if (secs < 3600)  return `LIVE · SYNCED ${Math.floor(secs / 60)}M AGO`
+    if (secs < 86400) return `LIVE · SYNCED ${Math.floor(secs / 3600)}H AGO`
+    return `LIVE · SYNCED ${Math.floor(secs / 86400)}D AGO`
   })()
 
   return {

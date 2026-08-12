@@ -1,8 +1,13 @@
 import type { DailyReading } from '../types'
 import type { Lake } from './lakes'
 
+export interface CSVFetchResult {
+  rows: DailyReading[]
+  fetchedAt: Date | null // when the server last pulled this data from origin
+}
+
 // Session-level parse cache — avoids re-parsing the same CSV
-const cache = new Map<string, DailyReading[]>()
+const cache = new Map<string, CSVFetchResult>()
 
 function parseCSV(csv: string): DailyReading[] {
   const rows: DailyReading[] = []
@@ -30,16 +35,20 @@ function parseCSV(csv: string): DailyReading[] {
   return rows.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-async function fetchCSV(lake: Lake, suffix: string): Promise<DailyReading[]> {
+async function fetchCSV(lake: Lake, suffix: string): Promise<CSVFetchResult> {
   const key = `${lake.id}${suffix}`
   if (cache.has(key)) return cache.get(key)!
   const url = `/api/lake-csv?lake=${encodeURIComponent(lake.id)}&suffix=${encodeURIComponent(suffix)}`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${lake.name}`)
   const text = await res.text()
-  const parsed = parseCSV(text)
-  cache.set(key, parsed)
-  return parsed
+  const fetchedAtHeader = res.headers.get('X-Fetched-At')
+  const result: CSVFetchResult = {
+    rows: parseCSV(text),
+    fetchedAt: fetchedAtHeader ? new Date(fetchedAtHeader) : null,
+  }
+  cache.set(key, result)
+  return result
 }
 
 export const fetchRecentReadings = (lake: Lake) => fetchCSV(lake, '-1year')

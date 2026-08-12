@@ -18,10 +18,10 @@ export function svgYToFt(lake: Lake, svgY: number): number {
 export const LAKES: Lake[] = [
   { id: 'buchanan',         name: 'LAKE BUCHANAN',     location: 'BURNET COUNTY, TX', fullPool: 1020.5, lowThreshold: 920.0 },
   { id: 'inks',             name: 'LAKE INKS',          location: 'BURNET COUNTY, TX', fullPool: 888.25, lowThreshold: 848.0 },
-  { id: 'lyndon-b-johnson', name: 'LAKE LBJ',           location: 'LLANO COUNTY, TX',  fullPool: 824.0,  lowThreshold: 790.0 },
+  { id: 'lyndon-b-johnson', name: 'LAKE LBJ',           location: 'LLANO COUNTY, TX',  fullPool: 824.0,  lowThreshold: 815.0 },
   { id: 'marble-falls',     name: 'LAKE MARBLE FALLS',  location: 'BURNET COUNTY, TX', fullPool: 738.5,  lowThreshold: 710.0 },
   { id: 'travis',           name: 'LAKE TRAVIS',        location: 'AUSTIN, TX',         fullPool: 681.0,  lowThreshold: 605.0 },
-  { id: 'austin',           name: 'LAKE AUSTIN',        location: 'AUSTIN, TX',         fullPool: 492.0,  lowThreshold: 460.0 },
+  { id: 'austin',           name: 'LAKE AUSTIN',        location: 'AUSTIN, TX',         fullPool: 492.0,  lowThreshold: 475.0 },
 ]
 
 export const DEFAULT_LAKE = LAKES.find(l => l.id === 'travis')!

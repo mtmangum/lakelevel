@@ -109,19 +109,30 @@ function levelYAtX(series: YearSeries, targetX: number): number | null {
 
 function computeYRange(series: YearSeries[], lake: Lake, xRange: [number, number]): [number, number] {
   const [xLo, xHi] = xRange
-  let minY = 9999, maxY = -9999, found = false
-  const extend = ({ x, y }: Point) => {
-    if (x < xLo || x > xHi) return
-    if (!found) { minY = y; maxY = y; found = true }
-    else { minY = Math.min(minY, y); maxY = Math.max(maxY, y) }
-  }
+  const ys: number[] = []
+  const collect = ({ x, y }: Point) => { if (x >= xLo && x <= xHi) ys.push(y) }
   for (const s of series) {
-    extend(s.start)
+    collect(s.start)
     const n = s.curves.length, samples = Math.max(200, n)
-    for (let i = 1; i <= samples; i++) extend(evalBezier(s.curves, s.start, (i / samples) * n))
-    extend(s.end)
+    for (let i = 1; i <= samples; i++) collect(evalBezier(s.curves, s.start, (i / samples) * n))
+    collect(s.end)
   }
-  if (!found) return [34, 226]
+  if (!ys.length) return [34, 226]
+  ys.sort((a, b) => a - b)
+  // IQR-fenced bounds instead of raw min/max. Constant-level lakes (LBJ,
+  // Austin) have almost no real day-to-day variation, so a brief multi-day
+  // dip — or the 30yr-avg line diverging from just-shown recent years —
+  // would otherwise stretch the zoom out and squash all the normal data
+  // into a sliver, regardless of what % of samples it spans. The fence
+  // scales with how tight the normal band actually is, so it adapts per
+  // lake instead of assuming a fixed outlier duration. A sustained real
+  // excursion (e.g. Travis during a drought) shifts Q1/Q3 themselves, so
+  // it isn't fenced out.
+  const q1 = ys[Math.floor(ys.length * 0.25)]
+  const q3 = ys[Math.floor(ys.length * 0.75)]
+  const iqr = Math.max(q3 - q1, 0.01)
+  const minY = Math.max(ys[0], q1 - 1.5 * iqr)
+  const maxY = Math.min(ys.at(-1)!, q3 + 1.5 * iqr)
   const ceil = lake.fullPool + 29, floor = lake.lowThreshold - 45
   const hi = svgYToFt(lake, minY), lo = svgYToFt(lake, maxY)
   const pad = Math.max(0.5, (hi - lo) * 0.15)

@@ -20,12 +20,13 @@ export async function handler(event) {
           'Content-Type': 'text/plain; charset=utf-8',
           'Cache-Control': 'public, max-age=300',
           'X-Fetched-At': cached.metadata?.fetchedAt ?? '',
+          'X-Cache': 'HIT',
         },
         body: cached.data,
       }
     }
-  } catch {
-    // Blobs unavailable or read failed — fall through to a live fetch
+  } catch (err) {
+    console.error(`lake-data blob read failed for ${key}`, err)
   }
 
   const url = `https://waterdatafortexas.org/reservoirs/individual/${lake}${suffix}.csv`
@@ -34,7 +35,9 @@ export async function handler(event) {
   const text = await res.text()
 
   const fetchedAt = new Date().toISOString()
-  store?.set(key, text, { metadata: { fetchedAt } }).catch(() => {})
+  store?.set(key, text, { metadata: { fetchedAt } }).catch(err => {
+    console.error(`lake-data blob write failed for ${key}`, err)
+  })
 
   return {
     statusCode: 200,
@@ -42,6 +45,7 @@ export async function handler(event) {
       'Content-Type': 'text/plain; charset=utf-8',
       'Cache-Control': 'public, max-age=300',
       'X-Fetched-At': fetchedAt,
+      'X-Cache': 'MISS',
     },
     body: text,
   }

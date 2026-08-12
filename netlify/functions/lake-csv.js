@@ -6,6 +6,7 @@
 // handler(event) form — only V2 functions get Netlify Blobs context
 // auto-injected at runtime; the classic form throws MissingBlobsEnvironmentError.
 import { getLakeStore } from '../lib/lakeStore.js'
+import { trimHistoricalCSV } from '../lib/trimHistory.js'
 
 export default async req => {
   const url = new URL(req.url)
@@ -37,7 +38,8 @@ export default async req => {
   const originUrl = `https://waterdatafortexas.org/reservoirs/individual/${lake}${suffix}.csv`
   const res = await fetch(originUrl)
   if (!res.ok) return new Response('Upstream error', { status: res.status })
-  const text = await res.text()
+  let text = await res.text()
+  if (suffix === '') text = trimHistoricalCSV(text)
 
   const fetchedAt = new Date().toISOString()
   store?.set(key, text, { metadata: { fetchedAt } }).catch(err => {

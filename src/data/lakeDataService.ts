@@ -35,10 +35,10 @@ function parseCSV(csv: string): DailyReading[] {
   return rows.sort((a, b) => a.date.localeCompare(b.date))
 }
 
-async function fetchCSV(lake: Lake, suffix: string): Promise<CSVFetchResult> {
-  const key = `${lake.id}${suffix}`
+export async function fetchAllReadings(lake: Lake): Promise<CSVFetchResult> {
+  const key = lake.id
   if (cache.has(key)) return cache.get(key)!
-  const url = `/api/lake-csv?lake=${encodeURIComponent(lake.id)}&suffix=${encodeURIComponent(suffix)}`
+  const url = `/api/lake-csv?lake=${encodeURIComponent(lake.id)}`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${lake.name}`)
   const text = await res.text()
@@ -51,10 +51,6 @@ async function fetchCSV(lake: Lake, suffix: string): Promise<CSVFetchResult> {
   return result
 }
 
-export const fetchRecentReadings = (lake: Lake) => fetchCSV(lake, '-1year')
-export const fetchAllReadings    = (lake: Lake) => fetchCSV(lake, '')
-
 export function bustCache(lake: Lake) {
-  cache.delete(`${lake.id}-1year`)
   cache.delete(lake.id)
 }

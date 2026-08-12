@@ -1,12 +1,12 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { DailyReading } from '../types'
 import { LAKES, DEFAULT_LAKE, type Lake } from '../data/lakes'
-import { fetchRecentReadings, fetchAllReadings } from '../data/lakeDataService'
+import { fetchAllReadings } from '../data/lakeDataService'
 import type { Units } from '../units'
 
 export interface MonthlyAvg { month: number; level: number }
 
-function derivedData(recent: DailyReading[], historical: DailyReading[]) {
+function derivedData(historical: DailyReading[]) {
   const currentYear = new Date().getFullYear()
   const cutoff = currentYear - 30
   const relevant = historical.filter(r => r.year >= cutoff && r.year < currentYear)
@@ -70,17 +70,14 @@ export function useAppState() {
     setIsLoadingData(true)
     setDataError(null)
     try {
-      const [recent, historical] = await Promise.all([
-        fetchRecentReadings(lake),
-        fetchAllReadings(lake),
-      ])
+      const historical = await fetchAllReadings(lake)
       if (gen !== genRef.current) return
-      const { monthlyAvgs, chartYears } = derivedData(recent.rows, historical.rows)
-      setReadings(recent.rows)
+      const { monthlyAvgs, chartYears } = derivedData(historical.rows)
+      setReadings(historical.rows)
       setHistoricalReadings(historical.rows)
       setThirtyYearMonthlyAvgs(monthlyAvgs)
       setChartYearDailyReadings(chartYears)
-      setLastUpdated(recent.fetchedAt ?? new Date())
+      setLastUpdated(historical.fetchedAt ?? new Date())
     } catch (err) {
       if (gen !== genRef.current) return
       setDataError(err instanceof Error ? err.message : 'Fetch failed')
@@ -123,7 +120,7 @@ export function useAppState() {
     fetchData(selectedLake)
     const prefetch = async () => {
       for (const lake of LAKES.filter(l => l.id !== selectedLake.id)) {
-        try { await Promise.all([fetchRecentReadings(lake), fetchAllReadings(lake)]) }
+        try { await fetchAllReadings(lake) }
         catch { /* ignore prefetch failures */ }
       }
     }

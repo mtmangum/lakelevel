@@ -43,7 +43,7 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
     }}>
       {/* Left: lake picker + title */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+        <h1 style={{ display: 'flex', alignItems: 'center', gap: 6, margin: 0, fontSize: 'inherit', fontWeight: 'inherit' }}>
           {/* Lake picker button */}
           <div ref={pickerRef} style={{ position: 'relative' }}>
             <button
@@ -94,7 +94,7 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
           <span style={{ fontSize: 16, fontWeight: 900, color: theme.text, letterSpacing: '0.1px' }}>
             WATER LEVEL MONITOR
           </span>
-        </div>
+        </h1>
 
         {/* Subtitle: location + sync status */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>

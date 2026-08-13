@@ -3,6 +3,7 @@ import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 
 const REPO_URL = 'https://github.com/mtmangum/lakelevel'
+const TWDB_URL = 'https://waterdatafortexas.org/reservoirs/'
 
 interface Props {
   theme: Theme
@@ -48,7 +49,16 @@ export function InfoPanel({ theme, onClose }: Props) {
           LakeLevel shows real-time and historical water levels for the six Highland Lakes on the Colorado River in Texas — Buchanan, Inks, LBJ, Marble Falls, Travis, and Austin.
         </p>
         <p style={{ fontSize: 14, lineHeight: 1.55, color: theme.textMuted(0.75), margin: '0 0 20px' }}>
-          Data is sourced from LCRA via the Texas Water Development Board and refreshes automatically throughout the day.
+          Data is sourced from LCRA via the{' '}
+          <a
+            href={TWDB_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{ color: theme.textMuted(0.75) }}
+          >
+            Texas Water Development Board
+          </a>{' '}
+          and refreshes automatically throughout the day.
         </p>
 
         <div style={{ borderTop: `1px solid ${theme.divider}`, paddingTop: 18 }}>

@@ -5,11 +5,13 @@ import { Header } from './components/Header'
 import { StatGrid } from './components/StatGrid'
 import { DashboardChart } from './components/DashboardChart'
 import { AnnualSummary } from './components/AnnualSummary'
+import { InfoPanel } from './components/InfoPanel'
 
 export function App() {
   const state = useAppState()
   const theme = makeTheme(state.isDark)
   const [showSummary, setShowSummary] = useState(false)
+  const [showInfo, setShowInfo] = useState(false)
 
   return (
     <div style={{
@@ -27,6 +29,7 @@ export function App() {
         isLoading={state.isLoadingData}
         syncLabel={state.syncLabel}
         onAnnualSummary={() => setShowSummary(s => !s)}
+        onShowInfo={() => setShowInfo(s => !s)}
       />
 
       <div className="app-content" style={{
@@ -62,6 +65,10 @@ export function App() {
           units={state.units}
           onClose={() => setShowSummary(false)}
         />
+      )}
+
+      {showInfo && (
+        <InfoPanel theme={theme} onClose={() => setShowInfo(false)} />
       )}
     </div>
   )

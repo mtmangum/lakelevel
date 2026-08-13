@@ -16,9 +16,10 @@ interface Props {
   isLoading: boolean
   syncLabel: string
   onAnnualSummary: () => void
+  onShowInfo: () => void
 }
 
-export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark, units, onSetUnits, isLoading, syncLabel, onAnnualSummary }: Props) {
+export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark, units, onSetUnits, isLoading, syncLabel, onAnnualSummary, onShowInfo }: Props) {
   const [showPicker, setShowPicker] = useState(false)
   const pickerRef = useRef<HTMLDivElement>(null)
 
@@ -119,6 +120,18 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
       <div className="header-spacer" style={{ flex: 1 }} />
 
       <div className="header-actions" style={{ display: 'flex', alignItems: 'center' }}>
+        {/* Info button */}
+        <button
+          onClick={onShowInfo}
+          aria-label="About LakeLevel"
+          style={{
+            background: 'none', border: 'none', cursor: 'pointer',
+            display: 'flex', alignItems: 'center', padding: 6, marginRight: 8,
+          }}
+        >
+          <InfoIcon color={theme.textMuted(0.5)} />
+        </button>
+
         {/* Annual summary button */}
         <button
           onClick={onAnnualSummary}
@@ -160,6 +173,16 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
         </div>
       )}
     </header>
+  )
+}
+
+function InfoIcon({ color }: { color: string }) {
+  return (
+    <svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+      <circle cx="8" cy="8" r="7" stroke={color} strokeWidth={1.4} />
+      <circle cx="8" cy="4.7" r="1" fill={color} />
+      <rect x="7.25" y="7.2" width="1.5" height="5" fill={color} />
+    </svg>
   )
 }
 

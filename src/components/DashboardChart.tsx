@@ -164,9 +164,14 @@ function computeGridlines(lake: Lake, yRange: [number, number], units: Units) {
   while (v <= top + step * 0.01) { dispSet.add(v); v += step }
   const fullPoolDisp = toDisplayValue(lake.fullPool, units)
   const lowThresholdDisp = toDisplayValue(lake.lowThreshold, units)
+  // Drop any regular gridline that would crowd right next to the fullPool/
+  // lowThreshold accent line — scaled to the step size, not a fixed 3ft.
+  // On a tightly-zoomed chart (a constant-level lake showing only a few feet
+  // of span) a fixed radius could exceed the entire visible range and wipe
+  // out every gridline, leaving just the lone accent line.
   for (const anchor of [fullPoolDisp, lowThresholdDisp]) {
     if (anchor >= bot - 0.5 && anchor <= top + 0.5) {
-      dispSet.forEach(v => { if (Math.abs(v - anchor) < 3) dispSet.delete(v) })
+      dispSet.forEach(v => { if (Math.abs(v - anchor) < step * 0.75) dispSet.delete(v) })
       dispSet.add(anchor)
     }
   }

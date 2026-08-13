@@ -46,7 +46,7 @@ export function InfoPanel({ theme, onClose }: Props) {
         </div>
 
         <p style={{ fontSize: 14, lineHeight: 1.55, color: theme.text, margin: '0 0 14px' }}>
-          LakeLevel shows real-time and historical water levels for the six Highland Lakes on the Colorado River in Texas — Buchanan, Inks, LBJ, Marble Falls, Travis, and Austin.
+          This site shows real-time and historical water levels for the six central Texas Highland Lakes on the Colorado River in Texas — Buchanan, Inks, LBJ, Marble Falls, Travis, and Austin.
         </p>
         <p style={{ fontSize: 14, lineHeight: 1.55, color: theme.textMuted(0.75), margin: '0 0 20px' }}>
           Data is sourced from LCRA via the{' '}

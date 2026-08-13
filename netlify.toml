@@ -7,3 +7,10 @@
   from   = "/api/*"
   to     = "/.netlify/functions/lake-csv"
   status = 200
+
+# Per-lake paths (/lake-buchanan etc.) are client-side routes, not real
+# files — hand every unmatched request to the SPA shell.
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200

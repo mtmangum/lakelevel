@@ -1,7 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react'
 import type { DailyReading } from '../types'
-import { LAKES, DEFAULT_LAKE, type Lake } from '../data/lakes'
+import { LAKES, DEFAULT_LAKE, lakePath, lakeFromPath, type Lake } from '../data/lakes'
 import { fetchAllReadings } from '../data/lakeDataService'
+import { syncSeoTags } from '../seo'
 import type { Units } from '../units'
 
 export interface MonthlyAvg { month: number; level: number }
@@ -33,9 +34,15 @@ function derivedData(historical: DailyReading[]) {
   return { monthlyAvgs, chartYears }
 }
 
-function lakeFromURL(): Lake | null {
+// Legacy `?lake=` deep links (pre path-based routing) — still resolved so
+// old shared/bookmarked links keep working, then normalized away below.
+function lakeFromQuery(): Lake | null {
   const id = new URLSearchParams(window.location.search).get('lake')
   return LAKES.find(l => l.id === id) ?? null
+}
+
+function lakeFromLocation(): Lake | null {
+  return lakeFromPath(window.location.pathname) ?? lakeFromQuery()
 }
 
 export function useAppState() {
@@ -43,7 +50,7 @@ export function useAppState() {
   const [units,  setUnits]  = useState<Units>('ft')
   const [selectedLake, setSelectedLakeRaw] = useState<Lake>(() => {
     const saved = localStorage.getItem('selectedLakeID')
-    return lakeFromURL() ?? LAKES.find(l => l.id === saved) ?? DEFAULT_LAKE
+    return lakeFromLocation() ?? LAKES.find(l => l.id === saved) ?? DEFAULT_LAKE
   })
 
   const [readings,              setReadings]              = useState<DailyReading[]>([])
@@ -89,9 +96,7 @@ export function useAppState() {
   const selectLake = useCallback((lake: Lake, replace = false) => {
     setSelectedLakeRaw(lake)
     localStorage.setItem('selectedLakeID', lake.id)
-    const url = new URL(window.location.href)
-    url.searchParams.set('lake', lake.id)
-    window.history[replace ? 'replaceState' : 'pushState'](null, '', url)
+    window.history[replace ? 'replaceState' : 'pushState'](null, '', lakePath(lake))
     setReadings([])
     setHistoricalReadings([])
     setThirtyYearMonthlyAvgs([])
@@ -99,15 +104,17 @@ export function useAppState() {
     setLastUpdated(null)
   }, [])
 
-  // Sync selected lake to the URL on first load, and react to back/forward navigation
+  // Sync selected lake to the URL on first load (also normalizes legacy
+  // `?lake=` links and any stray query string to the canonical path), and
+  // react to back/forward navigation
   useEffect(() => {
-    const url = new URL(window.location.href)
-    if (url.searchParams.get('lake') !== selectedLake.id) {
-      url.searchParams.set('lake', selectedLake.id)
-      window.history.replaceState(null, '', url)
+    const path = lakePath(selectedLake)
+    if (window.location.pathname !== path || window.location.search) {
+      window.history.replaceState(null, '', path)
     }
+    syncSeoTags(selectedLake)
     const onPopState = () => {
-      const lake = lakeFromURL()
+      const lake = lakeFromLocation()
       if (lake && lake.id !== selectedLake.id) selectLake(lake, true)
     }
     window.addEventListener('popstate', onPopState)

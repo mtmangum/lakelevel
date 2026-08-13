@@ -18,7 +18,7 @@ This repo was split out of the original [mtmangum/WaterLevel](https://github.com
 - **Feet / meters toggle** — all displayed levels convert between units; chart gridlines pick unit-appropriate step sizes
 - **Dark / Light mode** — toggled from the header; default is dark
 - **Mobile-responsive** — stacking header/stat grid, touch-enabled chart (tap for tooltip, drag to zoom), full-screen Annual Summary sheet under 640px
-- **Shareable links** — `?lake=` deep links to a specific lake
+- **Shareable links** — each lake has its own URL: Lake Travis at the root, the rest at `/lake-<name>` (e.g. `/lake-buchanan`); legacy `?lake=` deep links still resolve and redirect to the new path
 
 ## Design
 

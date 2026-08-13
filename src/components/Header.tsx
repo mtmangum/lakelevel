@@ -123,6 +123,7 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
         {/* Annual summary button */}
         <button
           onClick={onAnnualSummary}
+          className="annual-summary-btn"
           style={{
             background: 'none', border: `1.5px solid ${theme.divider}`,
             cursor: 'pointer', fontFamily: 'inherit',
@@ -142,7 +143,7 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
           theme={theme}
         />
 
-        <div style={{ width: 8 }} />
+        <div className="action-gap" style={{ width: 8 }} />
 
         {/* Units toggle */}
         <SegmentedControl
@@ -152,7 +153,7 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
           theme={theme}
         />
 
-        <div style={{ width: 8 }} />
+        <div className="action-gap" style={{ width: 8 }} />
 
         {/* Info button: text label on desktop, icon-only once space is tight */}
         <button
@@ -228,6 +229,7 @@ function SegmentedControl<T>({ options, value, onChange, theme }: {
         <button
           key={opt.label}
           onClick={() => onChange(opt.value)}
+          className="segmented-option"
           style={{
             background: opt.value === value ? theme.surface : 'none',
             border: 'none',

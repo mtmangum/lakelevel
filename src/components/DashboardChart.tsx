@@ -1,4 +1,4 @@
-import React, { useRef, useState, useMemo, useCallback, useEffect, useId } from 'react'
+import React, { useRef, useState, useMemo, useCallback, useEffect } from 'react'
 import type { DailyReading, Point, CubicSegment } from '../types'
 import type { Lake } from '../data/lakes'
 import { ftToSvgY, svgYToFt } from '../data/lakes'
@@ -75,7 +75,15 @@ function buildPathD(
 ): string {
   const sx = w / (xRange[1] - xRange[0]), sy = h / (yRange[1] - yRange[0])
   const px = (x: number) => ((x - xRange[0]) * sx).toFixed(2)
-  const py = (y: number) => ((y - yRange[0]) * sy).toFixed(2)
+  // Clamp instead of letting an outlier point overshoot the frame — this
+  // makes the curve smoothly flatten along the edge (control points near
+  // the boundary get clamped too, so the approach is gradual) rather than
+  // needing an SVG clip that would just cut the stroke off abruptly with a
+  // visible gap where it re-enters the visible range.
+  const py = (y: number) => {
+    const clamped = Math.min(Math.max(y, yRange[0]), yRange[1])
+    return ((clamped - yRange[0]) * sy).toFixed(2)
+  }
   const parts = [`M${px(start.x)},${py(start.y)}`]
   for (const { c1, c2, end: e } of curves)
     parts.push(`C${px(c1.x)},${py(c1.y)} ${px(c2.x)},${py(c2.y)} ${px(e.x)},${py(e.y)}`)
@@ -235,10 +243,6 @@ interface Props {
 }
 
 export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs, units }: Props) {
-  // Sanitized: React's useId() includes colons (e.g. ":r0:"), which are
-  // unreliable inside an SVG `url(#...)` reference in some browsers and can
-  // make the clipPath silently fail to apply.
-  const clipId = `chart-plot-clip-${useId().replace(/:/g, '')}`
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 800, h: 320 })
   const [xRange, setXRange] = useState<[number, number]>([0, 1000])
@@ -293,7 +297,10 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   const showYAxis = size.w >= 480
 
   const toSX = (sx: number) => (sx - xRange[0]) / (xRange[1] - xRange[0]) * chartW
-  const toSY = (sy: number) => (sy - yRange[0]) / (yRange[1] - yRange[0]) * chartH
+  const toSY = (sy: number) => {
+    const raw = (sy - yRange[0]) / (yRange[1] - yRange[0]) * chartH
+    return Math.min(Math.max(raw, 0), chartH)
+  }
 
   // Memoized gridlines & ticks
   const gridlines = useMemo(() => computeGridlines(lake, yRange, units), [lake, yRange, units])
@@ -467,37 +474,29 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
             )
           })}
 
-          {/* Clip series lines to the plot area — an outlier point outside
-              the fenced yRange (see computeYRange) should cut off cleanly
-              at the frame edge rather than render past it uncontained. */}
-          <defs>
-            <clipPath id={clipId}>
-              <rect x={0} y={0} width={chartW} height={chartH} />
-            </clipPath>
-          </defs>
-          <g clipPath={`url(#${clipId})`}>
-            {/* 30-yr avg */}
-            {!hidden.has(K_AVG) && avgSeries && pathMap.has(K_AVG) && (
-              <path d={pathMap.get(K_AVG)!} fill="none"
-                stroke={theme.chartAvgLine} strokeWidth={1.5} strokeDasharray="5,5" />
-            )}
+          {/* 30-yr avg */}
+          {!hidden.has(K_AVG) && avgSeries && pathMap.has(K_AVG) && (
+            <path d={pathMap.get(K_AVG)!} fill="none"
+              stroke={theme.chartAvgLine} strokeWidth={1.5} strokeDasharray="5,5" />
+          )}
 
-            {/* Year lines (reversed → 2026 on top) */}
-            {[...allSeries].reverse().map(s => {
-              if (hidden.has(s.id)) return null
-              const d = pathMap.get(s.id); if (!d) return null
-              const dot = s.dotPosition ? { sx: toSX(s.dotPosition.x), sy: toSY(s.dotPosition.y) } : null
-              return (
-                <g key={s.id}>
-                  <path d={d} fill="none" stroke={s.color}
-                    strokeWidth={s.year === '2026' ? 2.5 : 1.5} strokeLinecap="round" />
-                  {dot && dot.sx >= 0 && dot.sx <= chartW && (
-                    <circle cx={dot.sx} cy={dot.sy} r={4.5} fill={s.color} />
-                  )}
-                </g>
-              )
-            })}
-          </g>
+          {/* Year lines (reversed → 2026 on top). Points are clamped to the
+              plot area in buildPathD/toSY, so an outlier flattens smoothly
+              along the frame edge instead of needing a hard clip. */}
+          {[...allSeries].reverse().map(s => {
+            if (hidden.has(s.id)) return null
+            const d = pathMap.get(s.id); if (!d) return null
+            const dot = s.dotPosition ? { sx: toSX(s.dotPosition.x), sy: toSY(s.dotPosition.y) } : null
+            return (
+              <g key={s.id}>
+                <path d={d} fill="none" stroke={s.color}
+                  strokeWidth={s.year === '2026' ? 2.5 : 1.5} strokeLinecap="round" />
+                {dot && dot.sx >= 0 && dot.sx <= chartW && (
+                  <circle cx={dot.sx} cy={dot.sy} r={4.5} fill={s.color} />
+                )}
+              </g>
+            )
+          })}
 
           {/* Crosshair vertical line */}
           {hoverX !== null && dragStart === null && (

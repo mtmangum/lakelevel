@@ -235,7 +235,10 @@ interface Props {
 }
 
 export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs, units }: Props) {
-  const clipId = useId()
+  // Sanitized: React's useId() includes colons (e.g. ":r0:"), which are
+  // unreliable inside an SVG `url(#...)` reference in some browsers and can
+  // make the clipPath silently fail to apply.
+  const clipId = `chart-plot-clip-${useId().replace(/:/g, '')}`
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 800, h: 320 })
   const [xRange, setXRange] = useState<[number, number]>([0, 1000])

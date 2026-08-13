@@ -120,18 +120,6 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
       <div className="header-spacer" style={{ flex: 1 }} />
 
       <div className="header-actions" style={{ display: 'flex', alignItems: 'center' }}>
-        {/* Info button */}
-        <button
-          onClick={onShowInfo}
-          aria-label="About LakeLevel"
-          style={{
-            background: 'none', border: 'none', cursor: 'pointer',
-            display: 'flex', alignItems: 'center', padding: 6, marginRight: 8,
-          }}
-        >
-          <InfoIcon color={theme.textMuted(0.5)} />
-        </button>
-
         {/* Annual summary button */}
         <button
           onClick={onAnnualSummary}
@@ -162,6 +150,21 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
           onChange={onSetUnits}
           theme={theme}
         />
+
+        <div style={{ width: 8 }} />
+
+        {/* Info button */}
+        <button
+          onClick={onShowInfo}
+          aria-label="About LakeLevel"
+          style={{
+            background: 'none', border: `1.5px solid ${theme.divider}`, cursor: 'pointer',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            padding: 8,
+          }}
+        >
+          <InfoIcon color={theme.textMuted(0.5)} />
+        </button>
       </div>
 
       {/* Loading shimmer under header */}

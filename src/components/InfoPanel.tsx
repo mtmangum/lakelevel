@@ -61,6 +61,27 @@ export function InfoPanel({ theme, onClose }: Props) {
           and refreshes automatically throughout the day.
         </p>
 
+        <div style={{ borderTop: `1px solid ${theme.divider}`, paddingTop: 16, paddingBottom: 4 }}>
+          <div style={{ fontSize: 12, fontWeight: 900, letterSpacing: '0.2px', color: theme.text, marginBottom: 12 }}>
+            HOW TO USE
+          </div>
+          <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
+            {[
+              ['LAKE ▾', 'switch between the six Highland Lakes'],
+              ['Tap a year', 'in the chart legend to hide/show it — double-tap to isolate it'],
+              ['Drag across the chart', 'to zoom into a date range; tap RESET to zoom back out'],
+              ['Hover the chart', '(or tap on mobile) to read the exact level for any date'],
+              ['ANNUAL SUMMARY', "min/max/avg and year-end levels for the selected lake"],
+              ['FT / M and DARK / LIGHT', 'switch units and theme from the header'],
+            ].map(([label, desc]) => (
+              <li key={label} style={{ fontSize: 13, lineHeight: 1.5, marginBottom: 9 }}>
+                <span style={{ fontWeight: 700, color: theme.text }}>{label}</span>
+                <span style={{ color: theme.textMuted(0.7) }}> — {desc}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+
         <div style={{ borderTop: `1px solid ${theme.divider}`, paddingTop: 18 }}>
           <p style={{ fontSize: 13, lineHeight: 1.5, color: theme.textMuted(0.6), margin: '0 0 10px' }}>
             This project is open source — fork it, adapt it, or point it at your own lake.

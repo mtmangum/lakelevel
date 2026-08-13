@@ -28,9 +28,8 @@ export function InfoPanel({ theme, onClose }: Props) {
         zIndex: 201,
       }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
-          <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: '0.2px' }}>
-            <span style={{ color: COLORS.water }}>LakeLevel</span>{' '}
-            <span style={{ color: theme.text }}>ABOUT</span>
+          <div style={{ fontSize: 13, fontWeight: 900, letterSpacing: '0.2px', color: theme.text }}>
+            ABOUT HIGHLAND LAKE LEVELS
           </div>
           <button
             onClick={onClose}

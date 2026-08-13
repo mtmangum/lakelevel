@@ -10,12 +10,15 @@ This repo was split out of [mtmangum/WaterLevel](https://github.com/mtmangum/Wat
 ## [Unreleased]
 
 ### Added
+- **Basic SEO metadata** — `<title>`/meta description, Open Graph and Twitter card tags, `robots.txt`, and `sitemap.xml`; the header's lake name + "WATER LEVEL MONITOR" text is now a real `<h1>` instead of a plain `<div>`.
+- **"How to use" section in the INFO panel** — spells out the chart's tap/double-tap year toggles, drag-to-zoom, and hover crosshair, none of which were otherwise discoverable.
 - **Server-side data cache** — an hourly scheduled function (`sync-lake-data.js`) pre-fetches every lake's CSV from waterdatafortexas.org into a shared Netlify Blobs store, so `lake-csv.js` serves cached data in a few hundred ms instead of round-tripping to the upstream on every request; falls back to a live fetch + write-through on a cold miss.
 - **`dev` branch deploy environment** — pushes to `dev` build a separate preview at `dev--brilliant-churros-222631.netlify.app` with its own scoped Blobs cache (`lake-data-dev`), so testing never touches production data. Non-production builds also get a `noindex` meta tag and a blanket `robots.txt` so they're never crawled.
 - **cfs/cms conversion for the unit toggle** — INFLOW/OUTFLOW stat values and the "X cfs outbound" detail line now convert to cubic meters per second when the M unit is selected, matching the FT/M toggle instead of staying in cfs regardless of unit.
 - **Feet / meters unit toggle** — FT/M `SegmentedControl` in the header, next to DARK/LIGHT. All displayed levels (stat grid, chart y-axis, tooltips, Annual Summary table) convert from the source data's feet to meters and back; internal chart geometry stays in feet throughout, only display formatting changes. Gridline step sizes (0.5/1/2/5/10/20) are chosen in whichever unit is currently displayed, so meter mode gets its own nicely-rounded ticks instead of ugly converted-feet fractions like 3.048.
 
 ### Changed
+- **Shareable links are now real per-lake URLs** — each lake has its own path (`/lake-buchanan`, `/lake-inks`, `/lake-lbj`, `/lake-marble-falls`, `/lake-austin`; Lake Travis stays at the root) instead of a `?lake=` query param, so each lake is a distinct, indexable page with its own `<title>`/description/canonical/OG tags. Legacy `?lake=` links still resolve and redirect to the new path.
 - **Trimmed cached history to the last 31 years** — full-history CSVs go back to the 1940s for some lakes (~1.9MB), but the app only ever uses the last 30 years; the cache now trims to that window server-side, cutting payload to ~700KB raw (~174KB compressed).
 - **Dropped the redundant `-1year` fetch** — every consumer of the "recent" readings (latest reading, trend calcs, current-year chart line) only needed data already present in the trimmed historical set, so it's now derived client-side instead of a second network round-trip, halving per-lake requests.
 - **"SYNCED X AGO" reflects real data freshness** — now driven by the server's last successful fetch from origin instead of the browser's own request time, and re-renders every 30s so it counts up live instead of freezing between state changes.

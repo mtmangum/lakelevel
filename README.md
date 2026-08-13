@@ -63,8 +63,8 @@ Netlify auto-builds and deploys on every push:
 ## Project structure
 
 ```
-├── index.html
-├── netlify.toml               — build config + /api/* redirect
+├── index.html                  — SEO meta tags (title/description/OG/Twitter), canonical link
+├── netlify.toml                — build config, /api/* redirect, SPA catch-all for /lake-* routes
 ├── netlify/
 │   ├── functions/
 │   │   ├── lake-csv.js         — serves cached CSV data, falls back to live fetch
@@ -73,19 +73,24 @@ Netlify auto-builds and deploys on every push:
 │       ├── lakeStore.js        — per-deploy-context Blobs store helper
 │       └── trimHistory.js      — trims CSV to the last 31 years
 ├── public/
-│   └── favicon.svg
+│   ├── favicon.svg
+│   ├── og-image.png            — social share image
+│   ├── robots.txt
+│   └── sitemap.xml
 └── src/
     ├── App.tsx
+    ├── seo.ts                   — syncs <title>/meta/canonical to the selected lake
     ├── theme.ts                 — COLORS + makeTheme(isDark)
     ├── units.ts                 — ft/m conversion helpers
     ├── components/
     │   ├── Header.tsx
     │   ├── StatGrid.tsx
     │   ├── DashboardChart.tsx
-    │   └── AnnualSummary.tsx
+    │   ├── AnnualSummary.tsx
+    │   └── InfoPanel.tsx
     ├── hooks/
-    │   └── useAppState.ts       — lake selection, data fetching, derived stats
+    │   └── useAppState.ts       — lake selection, routing, data fetching, derived stats
     └── data/
-        ├── lakes.ts             — Lake definitions + coordinate helpers
+        ├── lakes.ts             — Lake definitions + path helpers
         └── lakeDataService.ts   — CSV fetch + parse
 ```

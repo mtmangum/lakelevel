@@ -127,7 +127,8 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
             background: 'none', border: `1.5px solid ${theme.divider}`,
             cursor: 'pointer', fontFamily: 'inherit',
             fontSize: 11, fontWeight: 600, letterSpacing: '0.3px',
-            color: theme.textMuted(0.5), padding: '8px 12px', marginRight: 16,
+            color: theme.textMuted(0.5), height: 32, boxSizing: 'border-box',
+            display: 'flex', alignItems: 'center', padding: '0 12px', marginRight: 16,
           }}
         >
           ANNUAL SUMMARY
@@ -153,17 +154,20 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
 
         <div style={{ width: 8 }} />
 
-        {/* Info button */}
+        {/* Info button: text label on desktop, icon-only once space is tight */}
         <button
           onClick={onShowInfo}
           aria-label="About LakeLevel"
+          className="info-btn"
           style={{
             background: 'none', border: `1.5px solid ${theme.divider}`, cursor: 'pointer',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            padding: 8,
+            fontFamily: 'inherit', fontSize: 11, fontWeight: 600, letterSpacing: '0.3px',
+            color: theme.textMuted(0.5), height: 32, boxSizing: 'border-box',
+            display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0 12px',
           }}
         >
-          <InfoIcon color={theme.textMuted(0.5)} />
+          <span className="info-btn-label">INFO</span>
+          <span className="info-btn-icon"><InfoIcon color={theme.textMuted(0.5)} /></span>
         </button>
       </div>
 
@@ -181,7 +185,7 @@ export function Header({ theme, selectedLake, onSelectLake, isDark, onToggleDark
 
 function InfoIcon({ color }: { color: string }) {
   return (
-    <svg width={16} height={16} viewBox="0 0 16 16" fill="none">
+    <svg width={14} height={14} viewBox="0 0 16 16" fill="none">
       <circle cx="8" cy="8" r="7" stroke={color} strokeWidth={1.4} />
       <circle cx="8" cy="4.7" r="1" fill={color} />
       <rect x="7.25" y="7.2" width="1.5" height="5" fill={color} />
@@ -219,7 +223,7 @@ function SegmentedControl<T>({ options, value, onChange, theme }: {
   theme: Theme
 }) {
   return (
-    <div style={{ display: 'flex', border: `1.5px solid ${theme.divider}` }}>
+    <div style={{ display: 'flex', height: 32, boxSizing: 'border-box', border: `1.5px solid ${theme.divider}` }}>
       {options.map(opt => (
         <button
           key={opt.label}
@@ -231,7 +235,7 @@ function SegmentedControl<T>({ options, value, onChange, theme }: {
             cursor: 'pointer', fontFamily: 'inherit',
             fontSize: 11, fontWeight: 700, letterSpacing: '0.4px',
             color: opt.value === value ? theme.text : theme.textMuted(0.45),
-            padding: '5px 10px',
+            display: 'flex', alignItems: 'center', padding: '0 10px',
           }}
         >
           {opt.label}

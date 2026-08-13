@@ -20,7 +20,13 @@ button { font-family: inherit; }
 .info-panel { top: 80px; right: 36px; min-width: 380px; max-width: 420px; padding: 24px; }
 .chart-title-row { padding-left: 16px; }
 
+.info-btn-icon { display: none; }
+
 @media (max-width: 640px) {
+  .info-btn { width: 32px; padding: 0 !important; }
+  .info-btn-label { display: none; }
+  .info-btn-icon { display: flex; }
+
   .app-header {
     padding: 20px 20px 16px;
     flex-wrap: wrap;

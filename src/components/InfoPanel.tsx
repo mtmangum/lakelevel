@@ -3,7 +3,7 @@ import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 
 const REPO_URL = 'https://github.com/mtmangum/lakelevel'
-const TWDB_URL = 'https://waterdatafortexas.org/reservoirs/'
+const TWDB_URL = 'https://waterdatafortexas.org/reservoirs/statewide'
 
 interface Props {
   theme: Theme

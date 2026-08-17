@@ -7,7 +7,7 @@ This repo was split out of [mtmangum/WaterLevel](https://github.com/mtmangum/Wat
 
 ---
 
-## [Unreleased]
+## [1.1.0] — 2026-08-17
 
 ### Added
 - **Basic SEO metadata** — `<title>`/meta description, Open Graph and Twitter card tags, `robots.txt`, and `sitemap.xml`; the header's lake name + "WATER LEVEL MONITOR" text is now a real `<h1>` instead of a plain `<div>`.

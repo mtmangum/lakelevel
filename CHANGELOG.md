@@ -13,7 +13,6 @@ This repo was split out of [mtmangum/WaterLevel](https://github.com/mtmangum/Wat
 - **Visible error state on failed data fetch** — a fetch failure used to just log to the console and leave the dashboard silently empty. Now shows a dismissible-by-retry banner under the header with a RETRY button, and stale data from a previous successful fetch stays on screen underneath it rather than being cleared.
 - **Loading skeleton** — the stat tiles and chart plot show an animated shimmer placeholder instead of bare "—" text while the very first fetch (or a fetch with nothing cached) is in flight.
 - **Zoom step-back** — RESET now undoes one zoom level at a time instead of always jumping straight to the fully zoomed-out view; the button relabels to BACK once there's more than one level to undo.
-- **Explicit "ONLY" isolate control** — each chart legend entry now has its own ONLY button next to the toggle, replacing the undiscoverable double-click/double-tap gesture. Both are real buttons, so they're keyboard-focusable.
 - **Vitest test suite** — unit tests for the ft/m formatters and the chart's pure math (curve building, y-range/gridline computation, zoom-history, the "steady" flow classification). `npm test` to run once, `npm run test:watch` for watch mode.
 
 ### Changed

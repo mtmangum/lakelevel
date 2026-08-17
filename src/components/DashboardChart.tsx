@@ -674,37 +674,23 @@ function LegendItem({ id, label, color, dashed, hidden, onToggle, onIsolate, the
   onToggle: (id: string) => void; onIsolate: (id: string) => void; theme: Theme
 }) {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: 3, opacity: hidden ? 0.35 : 1, userSelect: 'none' }}>
-      <button
-        onClick={() => onToggle(id)}
-        title={`${hidden ? 'Show' : 'Hide'} ${label}`}
-        style={{
-          display: 'flex', alignItems: 'center', gap: 5,
-          background: 'none', border: 'none', padding: 0,
-          cursor: 'pointer', fontFamily: 'inherit',
-        }}
-      >
-        <svg width={14} height={2.5}>
-          {dashed
-            ? <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} strokeDasharray="3,2" />
-            : <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} />
-          }
-        </svg>
-        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.3px', color: theme.textMuted(0.6) }}>{label}</span>
-      </button>
-      <button
-        onClick={() => onIsolate(id)}
-        title={`Show only ${label}`}
-        aria-label={`Show only ${label}`}
-        style={{
-          background: 'none', border: 'none', padding: '2px 3px',
-          cursor: 'pointer', fontFamily: 'inherit',
-          fontSize: 8.5, fontWeight: 700, letterSpacing: '0.2px',
-          color: theme.textMuted(0.3),
-        }}
-      >
-        ONLY
-      </button>
-    </div>
+    <button
+      onClick={() => onToggle(id)}
+      onDoubleClick={() => onIsolate(id)}
+      title={`${hidden ? 'Show' : 'Hide'} ${label} — double-click to isolate`}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 5,
+        background: 'none', border: 'none', padding: 0,
+        opacity: hidden ? 0.35 : 1, cursor: 'pointer', userSelect: 'none', fontFamily: 'inherit',
+      }}
+    >
+      <svg width={14} height={2.5}>
+        {dashed
+          ? <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} strokeDasharray="3,2" />
+          : <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} />
+        }
+      </svg>
+      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.3px', color: theme.textMuted(0.6) }}>{label}</span>
+    </button>
   )
 }

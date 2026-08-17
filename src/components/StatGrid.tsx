@@ -5,6 +5,7 @@ import type { DailyReading } from '../types'
 import type { MonthlyAvg } from '../hooks/useAppState'
 import type { Units } from '../units'
 import { formatLevel, formatSignedLevel, formatFlow } from '../units'
+import { Skeleton } from './Skeleton'
 
 interface Props {
   theme: Theme
@@ -13,21 +14,48 @@ interface Props {
   thirtyYearAvgLevel: number | null
   thirtyYearMonthlyAvgs: MonthlyAvg[]
   units: Units
+  isLoadingData: boolean
 }
 
-export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, units }: Props) {
+// Below this, day-to-day movement is normal gauge/measurement noise, not an
+// actual inflow/outflow event — rendered as a distinct "steady" state rather
+// than a number so it doesn't read as "zero flow."
+const FLOW_NOISE_FLOOR_CFS = 10
+
+// `direction` picks which side of net flow this reads: 1 for inflow (net
+// positive), -1 for outflow (net negative, reported as a positive magnitude).
+export function classifyFlow(netCfs: number | null, direction: 1 | -1): number | 'steady' | null {
+  if (netCfs === null) return null
+  const signed = netCfs * direction
+  return signed > FLOW_NOISE_FLOOR_CFS ? signed : 'steady'
+}
+
+function SteadyValue({ theme }: { theme: Theme }) {
+  return (
+    <span
+      title="Change is within normal day-to-day noise"
+      style={{ display: 'inline-flex', alignItems: 'center', gap: 6, fontSize: 15, fontWeight: 700, color: theme.textMuted(0.5) }}
+    >
+      <span aria-hidden="true">≈</span>Steady
+    </span>
+  )
+}
+
+export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, units, isLoadingData }: Props) {
   const latest = readings.at(-1) ?? null
+  const showSkeleton = isLoadingData && !latest
 
   const levelStr = !latest ? '—' : formatLevel(latest.waterLevel, units)
 
   const netCfs = dailyNetCfs
-  const inflowStr = netCfs === null ? '—'
-    : netCfs > 10 ? formatFlow(netCfs, units)
-    : 'Steady'
-
-  const outflowStr = netCfs === null ? '—'
-    : netCfs < -10 ? formatFlow(Math.abs(netCfs), units)
-    : 'Steady'
+  const inflowClass = classifyFlow(netCfs, 1)
+  const outflowClass = classifyFlow(netCfs, -1)
+  const inflowValue = inflowClass === null ? '—'
+    : inflowClass === 'steady' ? <SteadyValue theme={theme} />
+    : formatFlow(inflowClass, units)
+  const outflowValue = outflowClass === null ? '—'
+    : outflowClass === 'steady' ? <SteadyValue theme={theme} />
+    : formatFlow(outflowClass, units)
 
   const vsAvg = latest && thirtyYearAvgLevel !== null
     ? latest.waterLevel - thirtyYearAvgLevel : null
@@ -72,17 +100,17 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, uni
         },
         {
           label: 'INFLOW',
-          value: inflowStr,
+          value: inflowValue,
           valueColor: theme.text,
           detail: inflowPct !== null
             ? <span style={{ color: inflowPct >= 0 ? COLORS.water : COLORS.accent }}>{inflowPct >= 0 ? '+' : ''}{inflowPct.toFixed(0)}% vs yesterday</span>
-            : netCfs !== null && netCfs < -10
-              ? <span style={{ color: COLORS.accent }}>↓ {formatFlow(Math.abs(netCfs), units)} outbound</span>
+            : typeof outflowClass === 'number'
+              ? <span style={{ color: COLORS.accent }}>↓ {formatFlow(outflowClass, units)} outbound</span>
               : null,
         },
         {
           label: 'OUTFLOW',
-          value: outflowStr,
+          value: outflowValue,
           valueColor: theme.text,
           detail: <span style={{ color: theme.textMuted(0.45) }}>NET DAILY</span>,
         },
@@ -102,7 +130,7 @@ export function StatGrid({ theme, readings, dailyNetCfs, thirtyYearAvgLevel, uni
             {cell.label}
           </div>
           <div style={{ fontSize: 22, fontWeight: 900, color: cell.valueColor, lineHeight: 1.1, marginBottom: 4 }}>
-            {cell.value}
+            {showSkeleton ? <Skeleton theme={theme} style={{ width: 64, height: 22 }} /> : cell.value}
           </div>
           <div style={{ fontSize: 11, minHeight: 16 }}>
             {cell.detail ?? <span style={{ opacity: 0 }}>–</span>}

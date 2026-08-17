@@ -53,12 +53,19 @@ export function useAppState() {
     return lakeFromLocation() ?? LAKES.find(l => l.id === saved) ?? DEFAULT_LAKE
   })
 
+  // The lake whose data is actually on screen. Lags `selectedLake` until a
+  // fetch for the new lake succeeds, so the chart/stats never render one
+  // lake's readings plotted against another lake's fullPool/lowThreshold
+  // scale — they swap together, atomically, instead of blanking in between.
+  const [chartLake, setChartLake] = useState<Lake>(selectedLake)
+
   const [readings,              setReadings]              = useState<DailyReading[]>([])
   const [historicalReadings,    setHistoricalReadings]    = useState<DailyReading[]>([])
   const [thirtyYearMonthlyAvgs, setThirtyYearMonthlyAvgs] = useState<MonthlyAvg[]>([])
   const [chartYearDailyReadings, setChartYearDailyReadings] = useState<Record<number, DailyReading[]>>({})
   const [isLoadingData, setIsLoadingData] = useState(false)
   const [lastUpdated,   setLastUpdated]   = useState<Date | null>(null)
+  const [fetchError,    setFetchError]    = useState<string | null>(null)
 
   const genRef = useRef(0)
 
@@ -74,6 +81,7 @@ export function useAppState() {
     genRef.current += 1
     const gen = genRef.current
     setIsLoadingData(true)
+    setFetchError(null)
     try {
       const historical = await fetchAllReadings(lake)
       if (gen !== genRef.current) return
@@ -83,9 +91,11 @@ export function useAppState() {
       setThirtyYearMonthlyAvgs(monthlyAvgs)
       setChartYearDailyReadings(chartYears)
       setLastUpdated(historical.fetchedAt ?? new Date())
+      setChartLake(lake)
     } catch (err) {
       if (gen !== genRef.current) return
       console.error(`Failed to fetch readings for ${lake.name}:`, err)
+      setFetchError(`Couldn't load data for ${lake.name}.`)
     } finally {
       if (gen === genRef.current) setIsLoadingData(false)
     }
@@ -95,12 +105,9 @@ export function useAppState() {
     setSelectedLakeRaw(lake)
     localStorage.setItem('selectedLakeID', lake.id)
     window.history[replace ? 'replaceState' : 'pushState'](null, '', lakePath(lake))
-    setReadings([])
-    setHistoricalReadings([])
-    setThirtyYearMonthlyAvgs([])
-    setChartYearDailyReadings({})
-    setLastUpdated(null)
   }, [])
+
+  const retry = useCallback(() => { fetchData(selectedLake) }, [fetchData, selectedLake])
 
   // Sync selected lake to the URL on first load (also normalizes legacy
   // `?lake=` links and any stray query string to the canonical path), and
@@ -157,9 +164,13 @@ export function useAppState() {
     isDark, setIsDark,
     units, setUnits,
     selectedLake, selectLake,
+    // chartLake (and the readings paired with it) lags selectedLake while a
+    // lake switch is in flight — render against chartLake, not selectedLake.
+    chartLake, isStale: chartLake.id !== selectedLake.id,
     readings, historicalReadings,
     thirtyYearMonthlyAvgs, chartYearDailyReadings,
     isLoadingData, lastUpdated, syncLabel,
+    fetchError, retry,
     dailyNetCfs, thirtyYearAvgLevel,
   }
 }

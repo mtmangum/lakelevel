@@ -7,6 +7,24 @@ This repo was split out of [mtmangum/WaterLevel](https://github.com/mtmangum/Wat
 
 ---
 
+## [1.2.0] — 2026-08-17
+
+### Added
+- **Visible error state on failed data fetch** — a fetch failure used to just log to the console and leave the dashboard silently empty. Now shows a dismissible-by-retry banner under the header with a RETRY button, and stale data from a previous successful fetch stays on screen underneath it rather than being cleared.
+- **Loading skeleton** — the stat tiles and chart plot show an animated shimmer placeholder instead of bare "—" text while the very first fetch (or a fetch with nothing cached) is in flight.
+- **Zoom step-back** — RESET now undoes one zoom level at a time instead of always jumping straight to the fully zoomed-out view; the button relabels to BACK once there's more than one level to undo.
+- **Explicit "ONLY" isolate control** — each chart legend entry now has its own ONLY button next to the toggle, replacing the undiscoverable double-click/double-tap gesture. Both are real buttons, so they're keyboard-focusable.
+- **Vitest test suite** — unit tests for the ft/m formatters and the chart's pure math (curve building, y-range/gridline computation, zoom-history, the "steady" flow classification). `npm test` to run once, `npm run test:watch` for watch mode.
+
+### Changed
+- **Y-axis labels now show on mobile** — previously hidden entirely under 480px width, leaving phones with no scale reference on the chart at all; the reserved label column is only 34px, cheap even at 320px wide.
+- **Historical year line colors adapt to the theme** — the fixed neutral-gray ramp for 2022–2025 went low-contrast fast in dark mode (the darkest years nearly matched the dark background) while staying high-contrast in light mode. Colors now derive from the theme's own text color at graduated opacities, so every year stays visible against whichever background is showing.
+- **Switching lakes no longer blanks the dashboard** — the previous lake's stats/chart now stay on screen (dimmed, non-interactive) until the new lake's data actually arrives, instead of clearing to empty "—" placeholders for the duration of the fetch.
+- **INFLOW/OUTFLOW "Steady" state** — day-to-day movement under the ±10 cfs noise floor now renders as a distinct, muted "≈ Steady" instead of sitting in the same bold font as a real reading, with a tooltip explaining what it means.
+
+### Fixed
+- **RESET button shifting the chart title row** — the button's border and padding made it taller than the "WATER LEVEL" title text next to it, so the row (and everything below it) grew by a couple of pixels whenever zoom toggled it in and out.
+
 ## [1.1.0] — 2026-08-17
 
 ### Added

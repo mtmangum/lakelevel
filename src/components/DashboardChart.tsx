@@ -7,6 +7,7 @@ import { COLORS } from '../theme'
 import type { MonthlyAvg } from '../hooks/useAppState'
 import type { Units } from '../units'
 import { toDisplayValue, fromDisplayValue, formatLevel } from '../units'
+import { Skeleton } from './Skeleton'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
@@ -14,20 +15,12 @@ const MONTH_NAMES  = ['JAN','FEB','MAR','APR','MAY','JUN','JUL','AUG','SEP','OCT
 const DAYS_IN_MONTH = [31,28,31,30,31,30,31,31,30,31,30,31]
 const K_AVG = '30-YR AVG'
 
-const YEAR_COLORS: Record<string, string> = {
-  '2026': COLORS.water,
-  '2025': COLORS.neutral500,
-  '2024': COLORS.neutral600,
-  '2023': COLORS.neutral700,
-  '2022': COLORS.neutral800,
-}
-
-const Y_AXIS_WIDTH = 34   // y-axis label overlay width (desktop only)
+const Y_AXIS_WIDTH = 34   // y-axis label overlay width
 const PAD_BOTTOM = 30   // x-axis label row height
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-interface YearSeries {
+export interface YearSeries {
   id: string
   year: string
   color: string
@@ -39,7 +32,7 @@ interface YearSeries {
 
 // ─── Pure math ────────────────────────────────────────────────────────────────
 
-function buildSegments(pts: Point[]): CubicSegment[] {
+export function buildSegments(pts: Point[]): CubicSegment[] {
   return pts.slice(0, -1).map((_, i) => {
     const p0 = pts[Math.max(0, i - 1)], p1 = pts[i]
     const p2 = pts[i + 1], p3 = pts[Math.min(pts.length - 1, i + 2)]
@@ -51,7 +44,7 @@ function buildSegments(pts: Point[]): CubicSegment[] {
   })
 }
 
-function evalBezier(curves: CubicSegment[], start: Point, t: number): Point {
+export function evalBezier(curves: CubicSegment[], start: Point, t: number): Point {
   if (!curves.length) return start
   const i = Math.min(Math.floor(t), curves.length - 1)
   const lt = t - i
@@ -64,11 +57,11 @@ function evalBezier(curves: CubicSegment[], start: Point, t: number): Point {
   }
 }
 
-function readingToSvgX(month: number, day: number): number {
+export function readingToSvgX(month: number, day: number): number {
   return 40 + (month - 1) * 80 + (day - 1) / DAYS_IN_MONTH[month - 1] * 80
 }
 
-function buildPathD(
+export function buildPathD(
   start: Point, curves: CubicSegment[], end: Point,
   xRange: [number, number], yRange: [number, number],
   w: number, h: number
@@ -93,7 +86,7 @@ function buildPathD(
   return parts.join('')
 }
 
-function levelYAtX(series: YearSeries, targetX: number): number | null {
+export function levelYAtX(series: YearSeries, targetX: number): number | null {
   const n = series.curves.length
   const samples = Math.max(600, n * 2)
   let prev = series.start
@@ -115,7 +108,7 @@ function levelYAtX(series: YearSeries, targetX: number): number | null {
 
 // ─── Y-range ──────────────────────────────────────────────────────────────────
 
-function computeYRange(series: YearSeries[], lake: Lake, xRange: [number, number]): [number, number] {
+export function computeYRange(series: YearSeries[], lake: Lake, xRange: [number, number]): [number, number] {
   const [xLo, xHi] = xRange
   const ys: number[] = []
   const collect = ({ x, y }: Point) => { if (x >= xLo && x <= xHi) ys.push(y) }
@@ -153,7 +146,7 @@ function computeYRange(series: YearSeries[], lake: Lake, xRange: [number, number
 
 // ─── Gridlines ────────────────────────────────────────────────────────────────
 
-function computeGridlines(lake: Lake, yRange: [number, number], units: Units, dense: boolean) {
+export function computeGridlines(lake: Lake, yRange: [number, number], units: Units, dense: boolean) {
   const [yLo, yHi] = yRange
   const top = toDisplayValue(svgYToFt(lake, yLo), units)
   const bot = toDisplayValue(svgYToFt(lake, yHi), units)
@@ -198,7 +191,7 @@ function computeGridlines(lake: Lake, yRange: [number, number], units: Units, de
 
 // ─── Date ticks ───────────────────────────────────────────────────────────────
 
-function computeDateTicks(xRange: [number, number]): Array<{ x: number; label: string }> {
+export function computeDateTicks(xRange: [number, number]): Array<{ x: number; label: string }> {
   const [xLo, xHi] = xRange
   const span = xHi - xLo
   const days = span / 80 * 30.5
@@ -220,7 +213,34 @@ function computeDateTicks(xRange: [number, number]): Array<{ x: number; label: s
   return ticks
 }
 
-function dateLabel(svgX: number): string {
+// ─── Zoom history ─────────────────────────────────────────────────────────────
+
+// Converts a drag's pixel span into a new xRange, scaled against the range
+// that was visible when the drag started.
+export function zoomRangeFromDrag(
+  current: [number, number], lo: number, hi: number, chartW: number
+): [number, number] {
+  const span = current[1] - current[0]
+  return [
+    Math.max(0, current[0] + (lo / chartW) * span),
+    Math.min(1000, current[0] + (hi / chartW) * span),
+  ]
+}
+
+export function pushZoom(history: Array<[number, number]>, current: [number, number]): Array<[number, number]> {
+  return [...history, current]
+}
+
+// Pops the most recent pre-zoom range off the stack. An empty history means
+// there's nothing to step back to, so the caller falls back to [0, 1000].
+export function popZoom(
+  history: Array<[number, number]>
+): { history: Array<[number, number]>; range: [number, number] | null } {
+  if (!history.length) return { history, range: null }
+  return { history: history.slice(0, -1), range: history[history.length - 1] }
+}
+
+export function dateLabel(svgX: number): string {
   const adj = Math.max(0, svgX - 40)
   const mi  = Math.max(0, Math.min(11, Math.floor(adj / 80)))
   const pos = (adj - mi * 80) / 80
@@ -230,7 +250,7 @@ function dateLabel(svgX: number): string {
 
 // ─── Series builders ──────────────────────────────────────────────────────────
 
-function seriesFromReadings(
+export function seriesFromReadings(
   rows: DailyReading[], year: string, color: string, lake: Lake, dotAtEnd = false
 ): YearSeries | null {
   if (rows.length < 2) return null
@@ -239,7 +259,7 @@ function seriesFromReadings(
   return { id: year, year, color, start: pts[0], curves, end: pts.at(-1)!, dotPosition: dotAtEnd ? pts.at(-1) : undefined }
 }
 
-function seriesFromAvgs(avgs: MonthlyAvg[], lake: Lake, color: string): YearSeries | null {
+export function seriesFromAvgs(avgs: MonthlyAvg[], lake: Lake, color: string): YearSeries | null {
   if (avgs.length < 2) return null
   const pts = avgs.map(a => ({ x: 40 + (a.month - 1) * 80, y: ftToSvgY(lake, a.level) }))
   const dec = avgs.find(a => a.month === 12)?.level ?? avgs.at(-1)!.level
@@ -256,12 +276,14 @@ interface Props {
   chartYearDailyReadings: Record<number, DailyReading[]>
   thirtyYearMonthlyAvgs: MonthlyAvg[]
   units: Units
+  isLoadingData: boolean
 }
 
-export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs, units }: Props) {
+export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, thirtyYearMonthlyAvgs, units, isLoadingData }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const [size, setSize] = useState({ w: 800, h: 320 })
   const [xRange, setXRange] = useState<[number, number]>([0, 1000])
+  const [zoomHistory, setZoomHistory] = useState<Array<[number, number]>>([])
   const [hidden, setHidden]   = useState<Set<string>>(new Set())
   const [hoverX, setHoverX]   = useState<number | null>(null)
   const [hoverY, setHoverY]   = useState<number | null>(null)
@@ -279,19 +301,33 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   }, [])
 
   useEffect(() => {
-    setXRange([0, 1000]); setHidden(new Set()); setHoverX(null); setHoverY(null)
+    setXRange([0, 1000]); setZoomHistory([]); setHidden(new Set()); setHoverX(null); setHoverY(null)
   }, [lake.id])
+
+  // Older-year lines shade off from the text color rather than a fixed
+  // neutral ramp — a fixed hex ramp goes low-contrast fast in dark mode
+  // (darker neutrals approach the dark background) while staying high
+  // contrast in light mode, since the same grays sit against a light bg.
+  // Deriving from theme.textMuted keeps every year visible against
+  // whichever background is actually showing.
+  const yearColors = useMemo<Record<number, string>>(() => ({
+    2025: theme.textMuted(0.72),
+    2024: theme.textMuted(0.56),
+    2023: theme.textMuted(0.44),
+    2022: theme.textMuted(0.34),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [theme.isDark])
 
   // Series
   const allSeries = useMemo<YearSeries[]>(() => {
     const s2026 = seriesFromReadings(readings.filter(r => r.year === 2026), '2026', COLORS.water, lake, true)
     const hist  = [2025, 2024, 2023, 2022].flatMap(yr => {
       const r = chartYearDailyReadings[yr]
-      const s = r?.length ? seriesFromReadings(r, `${yr}`, YEAR_COLORS[`${yr}`] ?? COLORS.neutral600, lake) : null
+      const s = r?.length ? seriesFromReadings(r, `${yr}`, yearColors[yr] ?? COLORS.neutral600, lake) : null
       return s ? [s] : []
     })
     return [s2026, ...hist].filter(Boolean) as YearSeries[]
-  }, [readings, chartYearDailyReadings, lake])
+  }, [readings, chartYearDailyReadings, lake, yearColors])
 
   const avgSeries = useMemo(
     () => seriesFromAvgs(thirtyYearMonthlyAvgs, lake, theme.chartAvgLine),
@@ -319,7 +355,11 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
   const chartW = size.w
   const chartH = size.h - PAD_BOTTOM
-  const showYAxis = size.w >= 480
+  // Reserving 34px for labels is cheap even on the narrowest phones — worth
+  // it since the axis is the only scale reference the chart has (mobile has
+  // no room for a legend numbers table, unlike a desktop hover tooltip).
+  // Only bail out for a container too small to be a real layout, not "mobile."
+  const showYAxis = size.w >= 200
 
   const toSX = (sx: number) => (sx - xRange[0]) / (xRange[1] - xRange[0]) * chartW
   const toSY = (sy: number) => {
@@ -380,19 +420,21 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
     setDragEnd(null)
   }, [])
 
+  // Shared by mouse + touch drag-release: commits a zoom and pushes the
+  // pre-zoom range onto history so RESET can step back one level at a time
+  // instead of always jumping straight to the fully zoomed-out view.
+  const commitZoom = useCallback((lo: number, hi: number) => {
+    if (hi - lo <= 15) return
+    setZoomHistory(h => pushZoom(h, xRange))
+    setXRange(zoomRangeFromDrag(xRange, lo, hi, chartW))
+  }, [xRange, chartW])
+
   const onMouseUp = useCallback((e: React.MouseEvent<SVGSVGElement>) => {
     if (dragStart === null) return
     const x = e.clientX - e.currentTarget.getBoundingClientRect().left
-    const lo = Math.min(dragStart, x), hi = Math.max(dragStart, x)
-    if (hi - lo > 15) {
-      const span = xRange[1] - xRange[0]
-      setXRange([
-        Math.max(0, xRange[0] + (lo / chartW) * span),
-        Math.min(1000, xRange[0] + (hi / chartW) * span),
-      ])
-    }
+    commitZoom(Math.min(dragStart, x), Math.max(dragStart, x))
     setDragStart(null); setDragEnd(null)
-  }, [dragStart, xRange, chartW])
+  }, [dragStart, commitZoom])
 
   const touchPoint = (e: React.TouchEvent<SVGSVGElement>) => {
     const t = e.touches[0] ?? e.changedTouches[0]
@@ -415,16 +457,21 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   const onTouchEnd = useCallback((e: React.TouchEvent<SVGSVGElement>) => {
     if (dragStart === null) return
     const { x } = touchPoint(e)
-    const lo = Math.min(dragStart, x), hi = Math.max(dragStart, x)
-    if (hi - lo > 15) {
-      const span = xRange[1] - xRange[0]
-      setXRange([
-        Math.max(0, xRange[0] + (lo / chartW) * span),
-        Math.min(1000, xRange[0] + (hi / chartW) * span),
-      ])
-    }
+    commitZoom(Math.min(dragStart, x), Math.max(dragStart, x))
     setDragStart(null); setDragEnd(null)
-  }, [dragStart, xRange, chartW])
+  }, [dragStart, commitZoom])
+
+  // RESET steps back one zoom level rather than always jumping to the fully
+  // zoomed-out view — for the common single-drag case these are the same
+  // thing (there's only one level to pop), so the button keeps its usual
+  // meaning; it only becomes an incremental "back" once you've zoomed twice.
+  const zoomBack = useCallback(() => {
+    setZoomHistory(h => {
+      const { history, range } = popZoom(h)
+      setXRange(range ?? [0, 1000])
+      return history
+    })
+  }, [])
 
   const toggle = useCallback((id: string) => {
     setHidden(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n })
@@ -443,12 +490,16 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
       <div className="chart-title-row" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10, minHeight: 22 }}>
         <span style={{ fontSize: 14.5, fontWeight: 900, letterSpacing: '0.2px', color: theme.text }}>WATER LEVEL</span>
         {isZoomed && (
-          <button onClick={() => setXRange([0, 1000])} style={{
-            background: 'none', border: `1px solid ${COLORS.water}80`,
-            color: COLORS.water, fontFamily: 'inherit',
-            fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '3px 7px', cursor: 'pointer',
-          }}>
-            RESET
+          <button
+            onClick={zoomBack}
+            title={zoomHistory.length > 1 ? 'Zoom back out one level' : 'Reset zoom'}
+            style={{
+              background: 'none', border: `1px solid ${COLORS.water}80`,
+              color: COLORS.water, fontFamily: 'inherit',
+              fontSize: 10, fontWeight: 700, letterSpacing: '0.4px', padding: '3px 7px', cursor: 'pointer',
+            }}
+          >
+            {zoomHistory.length > 1 ? 'BACK' : 'RESET'}
           </button>
         )}
         <div className="chart-legend-spacer" style={{ flex: 1 }} />
@@ -464,9 +515,20 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
       {/* Chart */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        {/* Y-axis labels — overlaid on left edge, desktop only. Minor
-            (dense-mode) gridlines stay unlabeled — the dotted lines alone
-            are legible enough without crowding the axis with numbers. */}
+        {/* Loading skeleton — only for the no-data-yet case (first load, or a
+            failed fetch with nothing cached). A lake switch that already has
+            a previous lake's data on screen is handled by App's stale-dim
+            treatment instead, so this and that never overlap. */}
+        {isLoadingData && allSeries.length === 0 && (
+          <Skeleton theme={theme} style={{
+            position: 'absolute', top: 0, right: 0, bottom: PAD_BOTTOM, zIndex: 3,
+            left: showYAxis ? Y_AXIS_WIDTH : 0, pointerEvents: 'none',
+          }} />
+        )}
+
+        {/* Y-axis labels — overlaid on left edge. Minor (dense-mode)
+            gridlines stay unlabeled — the dotted lines alone are legible
+            enough without crowding the axis with numbers. */}
         {showYAxis && gridlines.filter(gl => !gl.isMinor).map(gl => (
           <span key={gl.ft} style={{
             position: 'absolute', left: 0, top: toSY(gl.svgY) - 4,
@@ -611,29 +673,38 @@ function LegendItem({ id, label, color, dashed, hidden, onToggle, onIsolate, the
   id: string; label: string; color: string; dashed: boolean; hidden: boolean
   onToggle: (id: string) => void; onIsolate: (id: string) => void; theme: Theme
 }) {
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
-  const handleClick = () => {
-    if (timerRef.current) {
-      clearTimeout(timerRef.current); timerRef.current = null
-      onIsolate(id)
-    } else {
-      timerRef.current = setTimeout(() => {
-        timerRef.current = null; onToggle(id)
-      }, 250)
-    }
-  }
   return (
-    <div onClick={handleClick} style={{
-      display: 'flex', alignItems: 'center', gap: 5,
-      opacity: hidden ? 0.35 : 1, cursor: 'pointer', userSelect: 'none',
-    }}>
-      <svg width={14} height={2.5}>
-        {dashed
-          ? <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} strokeDasharray="3,2" />
-          : <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} />
-        }
-      </svg>
-      <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.3px', color: theme.textMuted(0.6) }}>{label}</span>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 3, opacity: hidden ? 0.35 : 1, userSelect: 'none' }}>
+      <button
+        onClick={() => onToggle(id)}
+        title={`${hidden ? 'Show' : 'Hide'} ${label}`}
+        style={{
+          display: 'flex', alignItems: 'center', gap: 5,
+          background: 'none', border: 'none', padding: 0,
+          cursor: 'pointer', fontFamily: 'inherit',
+        }}
+      >
+        <svg width={14} height={2.5}>
+          {dashed
+            ? <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} strokeDasharray="3,2" />
+            : <line x1={0} y1={1.25} x2={14} y2={1.25} stroke={hidden ? theme.divider : color} strokeWidth={2.5} />
+          }
+        </svg>
+        <span style={{ fontSize: 11, fontWeight: 600, letterSpacing: '0.3px', color: theme.textMuted(0.6) }}>{label}</span>
+      </button>
+      <button
+        onClick={() => onIsolate(id)}
+        title={`Show only ${label}`}
+        aria-label={`Show only ${label}`}
+        style={{
+          background: 'none', border: 'none', padding: '2px 3px',
+          cursor: 'pointer', fontFamily: 'inherit',
+          fontSize: 8.5, fontWeight: 700, letterSpacing: '0.2px',
+          color: theme.textMuted(0.3),
+        }}
+      >
+        ONLY
+      </button>
     </div>
   )
 }

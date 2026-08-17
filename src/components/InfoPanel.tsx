@@ -68,7 +68,7 @@ export function InfoPanel({ theme, onClose }: Props) {
           <ul style={{ listStyle: 'none', margin: 0, padding: 0 }}>
             {[
               ['LAKE ▾', 'switch between the six Highland Lakes'],
-              ['Tap a year', 'in the chart legend to hide/show it — double-tap to isolate it'],
+              ['Tap a year', 'in the chart legend to hide/show it — tap ONLY to isolate it'],
               ['Drag across the chart', 'to zoom into a date range; tap RESET to zoom back out'],
               ['Hover the chart', '(or tap on mobile) to read the exact level for any date'],
               ['ANNUAL SUMMARY', "min/max/avg and year-end levels for the selected lake"],

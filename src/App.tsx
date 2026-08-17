@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { makeTheme } from './theme'
 import { useAppState } from './hooks/useAppState'
 import { Header } from './components/Header'
+import { ErrorBanner } from './components/ErrorBanner'
 import { StatGrid } from './components/StatGrid'
 import { DashboardChart } from './components/DashboardChart'
 import { AnnualSummary } from './components/AnnualSummary'
@@ -32,9 +33,16 @@ export function App() {
         onShowInfo={() => setShowInfo(s => !s)}
       />
 
+      {state.fetchError && (
+        <ErrorBanner theme={theme} message={state.fetchError} onRetry={state.retry} />
+      )}
+
       <div className="app-content" style={{
         flex: 1, display: 'flex', flexDirection: 'column',
         minHeight: 0,
+        opacity: state.isStale ? 0.4 : 1,
+        pointerEvents: state.isStale ? 'none' : 'auto',
+        transition: 'opacity 0.15s ease-out',
       }}>
         <StatGrid
           theme={theme}
@@ -43,16 +51,18 @@ export function App() {
           thirtyYearAvgLevel={state.thirtyYearAvgLevel}
           thirtyYearMonthlyAvgs={state.thirtyYearMonthlyAvgs}
           units={state.units}
+          isLoadingData={state.isLoadingData}
         />
 
         <div style={{ flex: 1, minHeight: 0 }}>
           <DashboardChart
             theme={theme}
-            lake={state.selectedLake}
+            lake={state.chartLake}
             readings={state.readings}
             chartYearDailyReadings={state.chartYearDailyReadings}
             thirtyYearMonthlyAvgs={state.thirtyYearMonthlyAvgs}
             units={state.units}
+            isLoadingData={state.isLoadingData}
           />
         </div>
       </div>
@@ -60,7 +70,7 @@ export function App() {
       {showSummary && (
         <AnnualSummary
           theme={theme}
-          lake={state.selectedLake}
+          lake={state.chartLake}
           historicalReadings={state.historicalReadings}
           units={state.units}
           onClose={() => setShowSummary(false)}

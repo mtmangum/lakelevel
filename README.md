@@ -9,11 +9,11 @@ This repo was split out of the original [mtmangum/WaterLevel](https://github.com
 ## Features
 
 - **All six Highland Lakes** — switch between Lake Buchanan, Inks, LBJ, Marble Falls, Travis, and Austin via the LAKE ▾ picker in the header
-- **Dashboard** — current lake level, inflow, outflow, and vs-30-yr-average stats; updates automatically every hour
+- **Dashboard** — current lake level, inflow, outflow, and vs-30-yr-average stats; updates automatically every hour, with a visible retry banner (and the previous lake's data kept on screen) if a fetch fails
 - **5-year overlay chart** — 2022–2026 lines on a shared Jan–Dec axis; current year in blue with a live endpoint dot
-- **Year toggles** — single-tap hides/shows a year; double-tap isolates it
+- **Year toggles** — tap a legend entry to hide/show it; tap ONLY to isolate it
 - **Interactive crosshair** — hover shows interpolated water level (ft) for every visible year
-- **Drag to zoom** — drag across the chart to zoom into a date range; RESET to restore full view
+- **Drag to zoom** — drag across the chart to zoom into a date range; RESET/BACK steps back one zoom level at a time
 - **Annual Summary popover** — header button opens a live min/max/avg/year-end table for the selected lake
 - **Feet / meters toggle** — all displayed levels convert between units; chart gridlines pick unit-appropriate step sizes
 - **Dark / Light mode** — toggled from the header; default is dark
@@ -54,6 +54,13 @@ npm run dev
 netlify dev
 ```
 
+Unit tests (Vitest) cover the ft/m formatters and the chart's pure math:
+
+```
+npm test          # single run
+npm run test:watch
+```
+
 ## Deployment
 
 Netlify auto-builds and deploys on every push:
@@ -77,17 +84,20 @@ Netlify auto-builds and deploys on every push:
 │   ├── og-image.png            — social share image
 │   ├── robots.txt
 │   └── sitemap.xml
+├── vitest.config.ts             — merges vite.config.ts, points at src/**/*.test.ts
 └── src/
     ├── App.tsx
     ├── seo.ts                   — syncs <title>/meta/canonical to the selected lake
     ├── theme.ts                 — COLORS + makeTheme(isDark)
-    ├── units.ts                 — ft/m conversion helpers
+    ├── units.ts                 — ft/m conversion helpers (+ units.test.ts)
     ├── components/
     │   ├── Header.tsx
-    │   ├── StatGrid.tsx
-    │   ├── DashboardChart.tsx
+    │   ├── StatGrid.tsx         — (+ StatGrid.test.ts)
+    │   ├── DashboardChart.tsx   — (+ DashboardChart.test.ts)
     │   ├── AnnualSummary.tsx
-    │   └── InfoPanel.tsx
+    │   ├── InfoPanel.tsx
+    │   ├── ErrorBanner.tsx      — shown under the header on a failed fetch
+    │   └── Skeleton.tsx         — shimmer placeholder for loading state
     ├── hooks/
     │   └── useAppState.ts       — lake selection, routing, data fetching, derived stats
     └── data/

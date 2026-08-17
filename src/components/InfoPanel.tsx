@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 

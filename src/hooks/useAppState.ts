@@ -58,7 +58,6 @@ export function useAppState() {
   const [thirtyYearMonthlyAvgs, setThirtyYearMonthlyAvgs] = useState<MonthlyAvg[]>([])
   const [chartYearDailyReadings, setChartYearDailyReadings] = useState<Record<number, DailyReading[]>>({})
   const [isLoadingData, setIsLoadingData] = useState(false)
-  const [dataError,     setDataError]     = useState<string | null>(null)
   const [lastUpdated,   setLastUpdated]   = useState<Date | null>(null)
 
   const genRef = useRef(0)
@@ -75,7 +74,6 @@ export function useAppState() {
     genRef.current += 1
     const gen = genRef.current
     setIsLoadingData(true)
-    setDataError(null)
     try {
       const historical = await fetchAllReadings(lake)
       if (gen !== genRef.current) return
@@ -87,7 +85,7 @@ export function useAppState() {
       setLastUpdated(historical.fetchedAt ?? new Date())
     } catch (err) {
       if (gen !== genRef.current) return
-      setDataError(err instanceof Error ? err.message : 'Fetch failed')
+      console.error(`Failed to fetch readings for ${lake.name}:`, err)
     } finally {
       if (gen === genRef.current) setIsLoadingData(false)
     }
@@ -137,8 +135,6 @@ export function useAppState() {
   }, [selectedLake, fetchData])
 
   // Computed
-  const latestReading = readings.at(-1) ?? null
-
   const dailyNetCfs = readings.length >= 2
     ? (readings.at(-1)!.storage - readings.at(-2)!.storage) * 0.504
     : null
@@ -163,7 +159,7 @@ export function useAppState() {
     selectedLake, selectLake,
     readings, historicalReadings,
     thirtyYearMonthlyAvgs, chartYearDailyReadings,
-    isLoadingData, dataError, lastUpdated, syncLabel,
-    latestReading, dailyNetCfs, thirtyYearAvgLevel,
+    isLoadingData, lastUpdated, syncLabel,
+    dailyNetCfs, thirtyYearAvgLevel,
   }
 }

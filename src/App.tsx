@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import { useState } from 'react'
 import { makeTheme } from './theme'
 import { useAppState } from './hooks/useAppState'
 import { Header } from './components/Header'

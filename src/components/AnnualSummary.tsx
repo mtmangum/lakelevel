@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import { useEffect } from 'react'
 import type { Theme } from '../theme'
 import type { DailyReading } from '../types'
 import type { Lake } from '../data/lakes'

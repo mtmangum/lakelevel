@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { Theme } from '../theme'
 import { COLORS } from '../theme'
 import type { Lake } from '../data/lakes'

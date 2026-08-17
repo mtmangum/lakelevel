@@ -6,8 +6,12 @@ export interface CSVFetchResult {
   fetchedAt: Date | null // when the server last pulled this data from origin
 }
 
-// Session-level parse cache — avoids re-parsing the same CSV
-const cache = new Map<string, CSVFetchResult>()
+// Session-level parse cache — avoids re-parsing the same CSV on lake-switch
+// prefetches. Entries expire before useAppState's hourly refresh timer fires,
+// so that poll actually reaches the network instead of re-serving the first
+// result for the rest of the session.
+const CACHE_TTL_MS = 55 * 60 * 1000
+const cache = new Map<string, { result: CSVFetchResult; cachedAt: number }>()
 
 function parseCSV(csv: string): DailyReading[] {
   const rows: DailyReading[] = []
@@ -37,7 +41,8 @@ function parseCSV(csv: string): DailyReading[] {
 
 export async function fetchAllReadings(lake: Lake): Promise<CSVFetchResult> {
   const key = lake.id
-  if (cache.has(key)) return cache.get(key)!
+  const cached = cache.get(key)
+  if (cached && Date.now() - cached.cachedAt < CACHE_TTL_MS) return cached.result
   const url = `/api/lake-csv?lake=${encodeURIComponent(lake.id)}`
   const res = await fetch(url)
   if (!res.ok) throw new Error(`HTTP ${res.status} fetching ${lake.name}`)
@@ -47,10 +52,6 @@ export async function fetchAllReadings(lake: Lake): Promise<CSVFetchResult> {
     rows: parseCSV(text),
     fetchedAt: fetchedAtHeader ? new Date(fetchedAtHeader) : null,
   }
-  cache.set(key, result)
+  cache.set(key, { result, cachedAt: Date.now() })
   return result
-}
-
-export function bustCache(lake: Lake) {
-  cache.delete(lake.id)
 }

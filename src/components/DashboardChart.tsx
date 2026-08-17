@@ -153,15 +153,24 @@ function computeYRange(series: YearSeries[], lake: Lake, xRange: [number, number
 
 // ─── Gridlines ────────────────────────────────────────────────────────────────
 
-function computeGridlines(lake: Lake, yRange: [number, number], units: Units) {
+function computeGridlines(lake: Lake, yRange: [number, number], units: Units, dense: boolean) {
   const [yLo, yHi] = yRange
   const top = toDisplayValue(svgYToFt(lake, yLo), units)
   const bot = toDisplayValue(svgYToFt(lake, yHi), units)
   const span = top - bot
-  const step = span < 3 ? 0.5 : span < 6 ? 1 : span < 12 ? 2 : span < 25 ? 5 : span < 150 ? 10 : 20
-  const dispSet = new Set<number>()
-  let v = Math.ceil(bot / step) * step
-  while (v <= top + step * 0.01) { dispSet.add(v); v += step }
+  const baseStep = span < 3 ? 0.5 : span < 6 ? 1 : span < 12 ? 2 : span < 25 ? 5 : span < 150 ? 10 : 20
+  // Isolating a single year zooms into a much tighter band with room to
+  // spare, so it gets a finer step — five times as many labeled lines —
+  // instead of the same coarse gridlines sized for the full multi-year view.
+  const step = dense ? baseStep / 5 : baseStep
+  const buildSet = (s: number) => {
+    const set = new Set<number>()
+    let v = Math.ceil(bot / s) * s
+    while (v <= top + s * 0.01) { set.add(v); v += s }
+    return set
+  }
+  const dispSet = buildSet(step)
+  const majorSet = dense ? buildSet(baseStep) : dispSet
   const fullPoolDisp = toDisplayValue(lake.fullPool, units)
   const lowThresholdDisp = toDisplayValue(lake.lowThreshold, units)
   // Drop any regular gridline that would crowd right next to the fullPool/
@@ -173,6 +182,7 @@ function computeGridlines(lake: Lake, yRange: [number, number], units: Units) {
     if (anchor >= bot - 0.5 && anchor <= top + 0.5) {
       dispSet.forEach(v => { if (Math.abs(v - anchor) < step * 0.75) dispSet.delete(v) })
       dispSet.add(anchor)
+      majorSet.add(anchor)
     }
   }
   return [...dispSet].sort((a, b) => b - a).flatMap(disp => {
@@ -180,8 +190,9 @@ function computeGridlines(lake: Lake, yRange: [number, number], units: Units) {
     const svgY = ftToSvgY(lake, ft)
     if (svgY < yLo - 1 || svgY > yHi + 1) return []
     const isAccent = Math.abs(ft - lake.fullPool) < 0.01 || Math.abs(ft - lake.lowThreshold) < 0.01
+    const isMinor = dense && !isAccent && ![...majorSet].some(m => Math.abs(m - disp) < step * 0.01)
     const label = units === 'ft' && disp >= 1000 ? Math.round(disp).toString() : disp === Math.floor(disp) ? `${disp}` : disp.toFixed(1)
-    return [{ ft, svgY, isAccent, label }]
+    return [{ ft, svgY, isAccent, isMinor, label }]
   })
 }
 
@@ -289,6 +300,15 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
   const allIds = useMemo(() => [...allSeries.map(s => s.id), K_AVG], [allSeries])
 
+  // When exactly one year line is showing — whether via double-click isolate
+  // or by manually deselecting the rest one at a time — the y-axis zooms into
+  // a much tighter band. Only the year lines matter here; the 30-yr avg line
+  // being on or off shouldn't affect whether a single year counts as isolated.
+  const isolatedYear = useMemo(() => {
+    const visibleYears = allSeries.filter(s => !hidden.has(s.id))
+    return visibleYears.length === 1 ? visibleYears[0].id : null
+  }, [allSeries, hidden])
+
   // Y range (from visible series within x-range)
   const visibleForRange = useMemo(() => {
     const base = allSeries.filter(s => !hidden.has(s.id))
@@ -308,7 +328,10 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
   }
 
   // Memoized gridlines & ticks
-  const gridlines = useMemo(() => computeGridlines(lake, yRange, units), [lake, yRange, units])
+  const gridlines = useMemo(
+    () => computeGridlines(lake, yRange, units, isolatedYear !== null),
+    [lake, yRange, units, isolatedYear]
+  )
   const dateTicks = useMemo(() => computeDateTicks(xRange), [xRange])
 
   // Path strings — expensive, memoized
@@ -441,8 +464,10 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
 
       {/* Chart */}
       <div ref={containerRef} style={{ flex: 1, position: 'relative', minHeight: 0 }}>
-        {/* Y-axis labels — overlaid on left edge, desktop only */}
-        {showYAxis && gridlines.map(gl => (
+        {/* Y-axis labels — overlaid on left edge, desktop only. Minor
+            (dense-mode) gridlines stay unlabeled — the dotted lines alone
+            are legible enough without crowding the axis with numbers. */}
+        {showYAxis && gridlines.filter(gl => !gl.isMinor).map(gl => (
           <span key={gl.ft} style={{
             position: 'absolute', left: 0, top: toSY(gl.svgY) - 4,
             width: Y_AXIS_WIDTH - 4, textAlign: 'right',
@@ -475,6 +500,7 @@ export function DashboardChart({ theme, lake, readings, chartYearDailyReadings, 
             return (
               <line key={gl.ft} x1={x1} y1={y} x2={chartW} y2={y}
                 stroke={gl.isAccent ? theme.accent : theme.divider}
+                strokeOpacity={gl.isMinor ? 0.45 : 1}
                 strokeWidth={1} strokeDasharray={gl.isAccent ? undefined : '3,5'} />
             )
           })}
